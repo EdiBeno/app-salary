@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דיווח שעות עבודה | BENO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load user role from session -->
+<script>
+    const userRole = "{{ session.get('role', '') }}".trim();
+    const employeeId = "{{ session.get('employee_id', '') }}".trim();
+    const employeeName = "{{ session.get('employee_name', '') }}".trim();
+</script>
+    <script src="{{ url_for('static', filename='hourscard.js') }}"></script>
+
+    <style>
+        :root {
+            --primary-color: #4f46e5; 
+            --secondary-color: #10b981;
+            --bg-color: #0f172a; 
+            --card-color: #1e293b;
+            --text-color: #e2e8f0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+        .container-wrapper { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+        .card { background-color: var(--card-color); border: 1px solid #334155; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); }
+        .btn-base { display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 0.5rem; transition: all 0.2s; cursor: pointer; }
+
+        .btn-base-homeclock { display: flex; align-items: left; justify-content: center; font-weight: bold; border-radius: 0.5rem; transition: all 0.2s; cursor: pointer; }
+        .btn-nav { background-color: #2563eb; color: white; padding: 0.25rem 1rem; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); white-space: nowrap; }  
+        .btn-nav-homeclock { background-color: #2563eb; color: white; padding: 0.5rem 1rem; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); white-space: nowrap; }
+        .btn-hours-save { display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 0.5rem; transition: all 0.2s; cursor: pointer; }
+        .btn-hours-nav { background-color: #4CAF50; color: white; padding: 0.25rem 1rem; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); white-space: nowrap; }
+        .btn-nav:hover { background-color: #1d4ed8; transform: scale(1.02); }
+        .btn-clock-in { background-color: #10b981; color: white; height: 3.5rem; font-size: 1.1rem; }
+        .btn-clock-in:hover:not(:disabled) { background-color: #059669; transform: scale(1.02); }
+        .btn-clock-out { background-color: #ef4444; color: white; height: 3.5rem; font-size: 1.1rem; }
+        .btn-clock-out:hover:not(:disabled) { background-color: #dc2626; transform: scale(1.02); }
+        .btn-save { background-color: #f59e0b; color: white; height: 3.5rem; font-size: 1.1rem; }
+        .btn-save:hover:not(:disabled) { background-color: #d97706; transform: scale(1.02); }
+        .disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+        input[type="text"] { background-color: #334155; border: 1px solid #475569; color: white; padding: 0.75rem; border-radius: 0.5rem; width: 100%; }
+        input:disabled { opacity: 0.6; cursor: not-allowed; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #334155; color: #94a3b8; padding: 12px; text-align: right; font-size: 0.85rem; }
+        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 0.95rem; }
+        tr:hover { background-color: #334155; }
+        .spinner { border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 3px solid white; width: 1.2rem; height: 1.2rem; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- הודעות פלאש -->
+    <div id="flash-messages" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md space-y-2 px-4"></div>
+
+    <div class="container-wrapper space-y-6">
+        <div class="flex justify-between items-center">
+            <a href="{{ url_for('index') }}" class="btn-base btn-nav">🏠 עבור לדף הראשי</a>
+
+            <div class="text-left text-xs text-gray-500">
+            <a href="{{ url_for('clock_in_out') }}" class="btn-base-homeclock btn-nav-homeclock">🏠 עבור לדו"ח שעות</a> 
+           </div>
+        </div>
+
+        <!-- כותרת ראשית -->
+        <header class="text-center border-b border-gray-700 pb-6">
+            <h1 class="text-3xl font-bold text-indigo-400">שעון נוכחות דיגיטלי</h1>
+            <p class="text-gray-400 text-sm mt-1">מערכת BENO לניהול זמן</p>
+        </header>
+
+        <!-- תיבה חדשה: שם משתמש -->
+        <div class="card p-4 md:p-6">
+            <h2 class="text-lg font-bold text-white mb-4 border-r-4 border-blue-500 pr-3">פרטי משתמש</h2>
+            <input type="hidden" id="employee_id" value="{{ employee_id }}">
+            <input type="hidden" id="id_number" value="{{ id_number }}">
+            <input type="hidden" id="timesheetMonth" value="{{ selected_month }}">
+            <input type="hidden" id="timesheetYear" value="{{ selected_year }}">
+
+     <table class="w-full border-collapse border border-gray-700 text-sm">
+            <tr>
+                <td class="p-4 text-gray-400 text-lg font-semibold">שם משתמש</td>
+                <td class="p-4 text-2xl font-bold text-white">{{ employee_name }}</td>
+            </tr>
+            <tr>
+                <td class="p-4 text-gray-400 text-lg font-semibold">מספר ת"ז</td>
+                <td class="p-4 text-2xl font-bold text-indigo-400">{{ id_number }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- סטטוס נוכחי -->
+    <div class="card p-4 text-center border border-gray-700">
+        <input type="hidden" id="status-hidden" value="not_in_shift">
+
+            <p class="text-sm text-gray-400 uppercase tracking-wide">סטטוס נוכחי</p>
+            <p id="status-text" class="text-3xl font-extrabold text-red-400 mt-2">🔴 לא במשמרת</p>
+        </div>
+
+        <!-- דיווח נוכחות -->
+        <div class="card p-6 md:p-8">
+            <h2 class="text-xl font-bold text-white mb-6 border-r-4 border-indigo-500 pr-3">דיווח נוכחות</h2>
+            <div class="mb-6">
+                <label for="task" class="block text-sm font-medium text-gray-300 mb-2">תיאור משימה / פרויקט</label>
+                <input type="text" id="task" placeholder="לדוגמה: פיתוח אתר, פגישת לקוח..." disabled>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button id="clock-in-btn" class="btn-base btn-clock-in">כניסה</button>
+                <button id="clock-out-btn" class="btn-base btn-clock-out disabled" disabled>יציאה</button>
+                <button id="save-btn" class="btn-base btn-save disabled" disabled>שמור דיווח</button>
+            </div>
+            <div class="mt-8 grid grid-cols-2 gap-4 text-sm bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <div>
+                    <p class="text-gray-500">שעת כניסה</p>
+                    <p id="start-time-display" class="text-lg text-green-400 font-mono">--:--</p>
+                    <p id="start-loc-display" class="text-xs text-gray-600 mt-1">מיקום: ללא</p>
+                </div>
+                <div>
+                    <p class="text-gray-500">שעת יציאה</p>
+                    <p id="end-time-display" class="text-lg text-red-400 font-mono">--:--</p>
+                    <p id="end-loc-display" class="text-xs text-gray-600 mt-1">מיקום: ללא</p>
+                </div>
+            </div>
+            <input type="hidden" id="date">
+        </div>
+
+        <div class="card p-6">
+            <h2 class="text-xl font-bold text-white mb-4 border-r-4 border-green-500 pr-3">היסטוריית דיווחים</h2>
+            <div class="overflow-x-auto">
+                <table class="timesheet-table">
+                    <thead>
+                        <tr><th>תאריך</th><th>שעות</th><th>משימה</th><th>משך</th><th>פעולות</th></tr>
+                    </thead>
+                    <tbody id="timesheets-list">
+                        {% for t in timesheet_data %}
+                        <tr>
+                            <td>{{ t.date }}</td>
+                            <td>{{ t.startTime }} - {{ t.endTime }}</td>
+                            <td>{{ t.task }}</td>
+                            <td>{{ "%.2f"|format(t.totalHours|float) }} שעות</td>
+                            <td>✔</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">אין נתונים להצגה</td></tr
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+</div> <!-- end container-wrapper -->
+
+<script>
+
+// --- Send Clock In / Clock Out to server ---
+function sendTime(type) {
+    const employee_id = document.getElementById("employee_id").value;
+    const task = document.getElementById("task").value;
+
+    fetch('/api/record_time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            employee_id: employee_id,
+            type: type,
+            task: task
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log("Saved:", data);
+    })
+    .catch(err => console.error("Error:", err));
+}
+
+// --- Connect buttons to sendTime() ---
+document.getElementById('clock-in-btn')
+    .addEventListener('click', () => sendTime('START'));
+
+document.getElementById('clock-out-btn')
+    .addEventListener('click', () => sendTime('END'));
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // אם המשתמש הוא עובד — למלא אוטומטית את מספר העובד ולנעול את השדה
+    if (userRole === "employee" && employeeId) {
+        const empField = document.getElementById("employee_id");  // או "employee_id" אם לא שינית
+        if (empField) {
+            empField.value = employeeId;
+            empField.disabled = true;
+        }
+    }
+});
+</script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

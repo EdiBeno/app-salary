@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול לקוחות</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='contact_form.css') }}">
+    <script>
+        function clearData() {
+            fetch('/clear_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh the page
+                } else {
+                    alert('Failed to clear data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while clearing data');
+            });
+        }
+
+        function validateForm() {
+            var form = document.getElementById('customer_form');
+            var inputs = form.querySelectorAll('input[required]');
+            var errorMessage = '';
+            
+            inputs.forEach(function(input) {
+                if (!input.value) {
+                    errorMessage += 'Please fill out the ' + input.name + ' field.<br>';
+                }
+            });
+            
+            if (errorMessage) {
+                document.getElementById('error-message').innerHTML = errorMessage;
+            } else {
+                form.submit();
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="column1"></div>
+        <div class="column2"> 
+       <h1 style="text-align: center;">הוסף או עדכן לקוח</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+<form action="{{ url_for('customer_form') }}" method="POST" id="form-body">
+    <input type="hidden" id="customer_id" name="customer_id" value="{{ customer.id if customer else '' }}">
+ 
+             <!-- Empty row after search form -->
+             <div style="height: 0.1cm;"></div>
+
+           <div class="form-container">
+                <div class="form-column">
+                    <div class="form-row">
+    <label for="date" style="font-size: 1.2em; font-weight: bold; width: 1.9cm; height: 0.3cm;display: flex; align-items: center;">תאריך:</label>
+<input type="date" id="date" name="date" class="form-input" value="{{ customer.date if customer else '' }}" required style="width: 4.4cm; height: 0.3cm;">
+            </div>
+            <div class="form-row">
+                <label for="customer_name">שם הלקוח :</label>
+<input type="text" id="customer_name" name="customer_name" value="{{ customer.customer_name if customer else '' }}" style="width: 4.55cm;">
+            </div>
+            <div class="form-row">
+                <label for="id_number">מספר זהות:</label>
+                <input type="text" id="id_number" name="id_number" value="{{ customer.id_number if customer else '' }}" style="width: 4.6cm;">
+            </div>
+            <div class="form-row">
+                <label for="address">כתובת:</label>
+                <input type="text" id="address" name="address" value="{{ customer.address if customer else '' }}" style="width: 5.4cm;">
+            </div>
+            <div class="form-row">
+                <label for="city">עיר:</label>
+                <input type="text" id="city" name="city" value="{{ customer.city if customer else '' }}" style="width: 5.9cm;">
+            </div>
+            <div class="form-row">
+                <label for="postal_code">מיקוד:</label>
+                <input type="text" id="postal_code" name="postal_code" value="{{ customer.postal_code if customer else '' }}" style="width: 5.5cm;">
+            </div>
+            <div class="form-row">
+                <label for="phone">טלפון:</label>
+                <input type="text" id="phone" name="phone" value="{{ customer.phone if customer else '' }}" style="width: 5.5cm;">
+            </div>
+            </div>
+            <div class="form-column">
+   
+             <!-- Empty row between form -->
+             <div style="height: 1.25cm;"></div>
+ 
+           <div class="form-row">
+                <label for="clothing_value">שווי ביגוד:</label>
+<input type="text" id="clothing_value" name="clothing_value" value="{{ customer.clothing_value if customer else '' }}" style="width: 3.9cm;">
+            </div>
+            <div class="form-row">
+                <label for="car_value">שווי רכב:</label>
+                <input type="text" id="car_value" name="car_value" value="{{ customer.car_value if customer else '' }}" style="width: 4.2cm;">
+            </div>
+            <div class="form-row">
+                <label for="email">מייל:</label>
+                <input type="text" id="email" name="email" value="{{ customer.email if customer else '' }}" style="width: 5.05cm;">
+            </div>
+            <div class="form-row">
+    <label for="date" style="font-size: 1.2em; font-weight: bold; width: 2.6cm; height: 0.3cm;display: flex; align-items: center;">תחילת עבודה:</label>
+<input type="date" id="start_date" name="start_date" value="{{ customer.start_date if customer else '' }}" style="width: 3.5cm; height: 0.6cm; font-weight: bold; font-size: 1.3em;">
+            </div>
+            <div class="form-row">
+                <label for="bank_number">מספר בנק:</label>
+                <input type="text" id="bank_number" name="bank_number" value="{{ customer.bank_number if customer else '' }}" style="width: 4.05cm;">
+            </div>
+            <div class="form-row">
+                <label for="branch_number">מספר סניף:</label>
+<input type="text" id="branch_number" name="branch_number" value="{{ customer.branch_number if customer else '' }}" style="width: 3.9cm;">
+            </div>
+            </div>
+            <div class="form-column">
+ 
+                 <!-- Empty row between form -->
+                <div style="height: 1.25cm;"></div>  
+
+            <div class="form-row">
+                <label for="account_number">חשבון בנק:</label>
+                <input type="text" id="account_number" name="account_number" value="{{ customer.account_number if customer else '' }}" style="width: 4.2cm;">
+            </div>
+            <div class="form-row">
+                <label for="lunch_value">שווי ארוחת צהריים:</label>
+                <input type="text" id="lunch_value" name="lunch_value" value="{{ customer.lunch_value if customer else '' }}" style="width: 2.55cm;">
+            </div>
+            <div class="form-row">
+                <label for="mobile_value">שווי טלפון נייד:</label>
+                <input type="text" id="mobile_value" name="mobile_value" value="{{ customer.mobile_value if customer else '' }}" style="width: 3.3cm;">
+            </div>
+            <div class="form-row">
+                <label for="hourly_rate">תעריף לשעה:</label>
+                <input type="text" id="hourly_rate" name="hourly_rate" value="{{ customer.hourly_rate if customer else '' }}" style="width: 3.75cm;">
+            </div>
+            <div class="form-row">
+                <label for="customer_number">מספר עובד:</label>
+<input type="text" id="customer_number" name="customer_number" value="{{ customer.customer_number if customer else '' }}" style="width: 4.15cm;">
+            </div>
+            <div class="form-row">
+                <label for="thirteenth_salary">משכורת י"ג:</label>
+                <input type="text" id="thirteenth_salary" name="thirteenth_salary" value="{{ customer.thirteenth_salary if customer else '' }}" style="width: 3.9cm;">
+            </div>
+        </div>
+            <div class="form-row">
+                <label for="message">הודעה:</label>
+        <input type="text" id="message" name="message" value="{{ customer.message if customer else '' }}" style="width: 5.4cm; height: 0.5cm; font-weight: bold;">
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!--  Combobox -->
+
+<div class="form-container">
+    <div class="form-column">
+        <div class="form-row">
+            <label for="work_apartment">מחלקה עובד:</label>
+<select id="work_apartment" name="work_apartment" class="form-select"
+        style="width: 4.25cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="נהג/ת" {% if customer.work_apartment == "נהג/ת" %}selected{% endif %}>נהג/ת</option>
+                <option value="מזכיר/ה" {% if customer.work_apartment == "מזכיר/ה" %}selected{% endif %}>מזכיר/ה</option>
+                <option value="מנהל/ת חשבונות" {% if customer.work_apartment == "מנהל/ת חשבונות" %}selected{% endif %}>מנהל/ת חשבונות</option>
+                <option value="אחזקה" {% if customer.work_apartment == "אחזקה" %}selected{% endif %}>אחזקה</option>
+                <option value="נקיון" {% if customer.work_apartment == "נקיון" %}selected{% endif %}>נקיון</option>
+                <option value="מיחשוב" {% if customer.work_apartment == "מיחשוב" %}selected{% endif %}>מיחשוב</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="work_percent">הסכם העסקה %:</label>
+            <select id="work_percent" name="work_percent" class="form-select" style="width: 3.4cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="100%" {% if customer.work_percent == "100%" %}selected{% endif %}>100%</option>
+                <option value="75%" {% if customer.work_percent == "75%" %}selected{% endif %}>75%</option>
+                <option value="50%" {% if customer.work_percent == "50%" %}selected{% endif %}>50%</option>
+                <option value="25%" {% if customer.work_percent == "25%" %}selected{% endif %}>25%</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="marital_status">מצב משפחתי:</label>
+            <select id="marital_status" name="marital_status" class="form-select" style="width: 4.1cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="רווק/ה" {% if customer.marital_status == "רווק/ה" %}selected{% endif %}>רווק/ה</option>
+                <option value="נשוי/נשואה" {% if customer.marital_status == "נשוי/נשואה" %}selected{% endif %}>נשוי/נשואה</option>
+                <option value="גרוש/ה" {% if customer.marital_status == "גרוש/ה" %}selected{% endif %}>גרוש/ה</option>
+                <option value="אלמן/ה" {% if customer.marital_status == "אלמן/ה" %}selected{% endif %}>אלמן/ה</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-column">
+        <div class="form-row">
+            <label for="tax_point">נקודות זיכוי מס:</label>
+            <select id="tax_point" name="tax_point" class="form-select" style="width: 2.9cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="0.75%" {% if customer.tax_point == "0.75%" %}selected{% endif %}>0.75%</option>
+                <option value="1.25%" {% if customer.tax_point == "1.25%" %}selected{% endif %}>1.25%</option>
+                <option value="1.75%" {% if customer.tax_point == "1.75%" %}selected{% endif %}>1.75%</option>
+                <option value="2.25%" {% if customer.tax_point == "2.25%" %}selected{% endif %}>2.25%</option>
+                <option value="2.75%" {% if customer.tax_point == "2.75%" %}selected{% endif %}>2.75%</option>
+                <option value="3.25%" {% if customer.tax_point == "3.25%" %}selected{% endif %}>3.25%</option>
+                <option value="3.75%" {% if customer.tax_point == "3.75%" %}selected{% endif %}>3.75%</option>
+                <option value="4.25%" {% if customer.tax_point == "4.25%" %}selected{% endif %}>4.25%</option>
+                <option value="4.75%" {% if customer.tax_point == "4.75%" %}selected{% endif %}>4.75%</option>
+                <option value="5.25%" {% if customer.tax_point == "5.25%" %}selected{% endif %}>5.25%</option>
+                <option value="5.75%" {% if customer.tax_point == "5.75%" %}selected{% endif %}>5.75%</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="hospital">קופת חולים:</label>
+            <select id="hospital" name="hospital" class="form-select" style="width: 3.65cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="כללית" {% if customer.hospital == "כללית" %}selected{% endif %}>כללית</option>
+                <option value="מכבי" {% if customer.hospital == "מכבי" %}selected{% endif %}>מכבי</option>
+                <option value="מאוחדת" {% if customer.hospital == "מאוחדת" %}selected{% endif %}>מאוחדת</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="social_number">ביטוח לאומי:</label>
+            <select id="social_number" name="social_number" class="form-select" style="width: 3.45cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="מלא" {% if customer.social_number == "מלא" %}selected{% endif %}>מלא</option>
+                <option value="חלקי" {% if customer.social_number == "חלקי" %}selected{% endif %}>חלקי</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-column">
+        <div class="form-row">
+            <label for="irs_status">מס הכנסה:</label>
+            <select id="irs_status" name="irs_status" class="form-select" style="width: 4.25cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value='יחיד' {% if customer.irs_status == 'יחיד' %}selected{% endif %}>יחיד</option>
+                <option value='בע"מ' {% if customer.irs_status == 'בע"מ' %}selected{% endif %}>בע"מ</option>
+                <option value='חברה' {% if customer.irs_status == 'חברה' %}selected{% endif %}>חברה</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="contract_status">סוג חוזה:</label>
+            <select id="contract_status" name="contract_status" class="form-select" style="width: 4.5cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="אישי" {% if customer.contract_status == "אישי" %}selected{% endif %}>אישי</option>
+                <option value="העסקה" {% if customer.contract_status == "העסקה" %}selected{% endif %}>העסקה</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="tax_point_child">ילד נכה נק. זיכוי:</label>
+            <select id="tax_point_child" name="tax_point_child" class="form-select" style="width: 3cm; display: flex; align-items: cente; height: 0.7cm;">
+                <option value="ילד 1" {% if customer.tax_point_child == "ילד 1" %}selected{% endif %}>ילד 1</option>
+                <option value="ילד 2" {% if customer.tax_point_child == "ילד 2" %}selected{% endif %}>ילד 2</option>
+                <option value="ילד 3" {% if customer.tax_point_child == "ילד 3" %}selected{% endif %}>ילד 3</option>
+                <option value="ילד 4" {% if customer.tax_point_child == "ילד 4" %}selected{% endif %}>ילד 4</option>
+                <option value="ילד 5" {% if customer.tax_point_child == "ילד 5" %}selected{% endif %}>ילד 5</option>
+                <option value="ילד 6" {% if customer.tax_point_child == "ילד 6" %}selected{% endif %}>ילד 6</option>
+                <option value="ילד 7" {% if customer.tax_point_child == "ילד 7" %}selected{% endif %}>ילד 7</option>
+                <option value="ילד 8" {% if customer.tax_point_child == "ילד 8" %}selected{% endif %}>ילד 8</option>
+                <option value="ילד 9" {% if customer.tax_point_child == "ילד 9" %}selected{% endif %}>ילד 9</option>
+                <option value="ילד 10" {% if customer.tax_point_child == "ילד 10" %}selected{% endif %}>ילד 10</option>
+                </select>
+               </div>
+            </div>
+       </div>
+   </div>
+</div>
+
+
+    <!-- Button Section -->
+<div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
+    <!-- Save Data Button -->
+    <form action="{{ url_for('customer_form') }}" method="POST">
+    <button type="submit" style="font-weight: bold; width: 3.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+           שמירת נתונים
+        </button>
+    </form>
+
+    <!-- Go to Main Page Button -->
+    <a href="{{ url_for('index') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+            עבור לדף הראשי
+        </button>
+    </a>
+
+    <!-- Search Form for Customer  -->
+<form method="POST" action="{{ url_for('search_customer') }}" style="display: flex; align-items: center;">
+    <label for="search_name" style="font-weight: bold; width: 3.5cm; height: 0.5cm; font-size: 19px; display: flex; align-items: center; margin-right: 19px;">חיפוש שם לקוחות:</label>
+    <select id="search_name" name="search_name" style="margin-right: 10px; width: 200px;">
+        <option value="">בחר שם לקוח</option>
+        {% for customer in all_customers %}
+            <option value="{{ customer.customer_name }}">{{ customer.customer_name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" style="font-weight: bold; width: 2cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+        חיפוש
+    </button>
+</form>
+
+    <!-- Clear Data Button for Customer  -->
+<form method="POST" action="{{ url_for('clear_search_results_customer') }}" style="display: flex; align-items: center;">
+    <button type="submit" style="font-weight: bold; width: 3cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
+        נקה מידע
+    </button>
+</form>
+
+<!-- Go to Customer Data Page Button -->
+<a href="{{ url_for('customer_data') }}" style="text-decoration: none;">
+    <button type="button" style="font-weight: bold; width: 3.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+            מידע לקוחות
+        </button>
+    </a>
+
+<!-- Go to Customer Data Page Button -->
+<a href="{{ url_for('customer_form') }}" style="text-decoration: none;">
+    <button type="button" style="font-weight: bold; width: 3.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+            עדכן ושמור
+        </button>
+      </a>
+    </div>
+ </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formBody = document.getElementById('form-body');
+    if (formBody) {
+        const allFields = Array.from(formBody.querySelectorAll('input, textarea, select'));
+
+        formBody.addEventListener('keydown', function (event) {
+            const key = event.key;
+            const current = event.target;
+            const index = allFields.indexOf(current);
+
+            if (index === -1) return;
+
+            // אם השדה הוא select ונלחץ חץ למטה — נפתח את הרשימה
+            if (current.tagName === 'SELECT' && key === 'ArrowDown') {
+                current.size = current.options.length; // פותח את כל האפשרויות
+                event.preventDefault();
+                return;
+            }
+
+            // אם השדה הוא select ונלחץ חץ למעלה — סוגר את הרשימה
+            if (current.tagName === 'SELECT' && key === 'ArrowUp') {
+                current.size = 1;
+                event.preventDefault();
+                return;
+            }
+
+            // ניווט רגיל בין שדות
+            if (key === 'ArrowDown' && index < allFields.length - 1) {
+                allFields[index + 1].focus();
+                event.preventDefault();
+            }
+            if (key === 'ArrowUp' && index > 0) {
+                allFields[index - 1].focus();
+                event.preventDefault();
+            }
+        });
+
+        // הדגשה כששדה נבחר
+        allFields.forEach(field => {
+            field.addEventListener('focus', () => {
+                field.style.backgroundColor = '#e6f7ff';
+                field.style.outline = '1px solid #007bff';
+                if (field.tagName === 'SELECT') {
+                    field.size = 1; // סגור את הרשימה כברירת מחדל
+                }
+            });
+            field.addEventListener('blur', () => {
+                field.style.backgroundColor = '';
+                field.style.outline = '';
+                if (field.tagName === 'SELECT') {
+                    field.size = 1; // סגור את הרשימה כשמאבדים פוקוס
+                }
+            });
+        });
+    }
+});
+</script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

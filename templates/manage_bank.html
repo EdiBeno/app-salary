@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול חשבון בנק</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='contact_form.css') }}">
+<script src="{{ url_for('static', filename='formulas.js') }}" defer></script>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.3cm;"></div>
+
+    <!-- Go to Main Page Button -->
+    <a href="{{ url_for('index') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 4.5cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+            עבור לדף הראשי
+        </button>
+    </a>
+
+    <h1>ניהול חשבון בנק עבור {{ employee.name }}</h1>
+
+    <form method="POST">
+<div class="form-row">
+    <label for="bank_code" style="font-size: 1.2em; font-weight: bold; width: 2.6cm; height: 0.3cm;display: flex; align-items: center;">קוד בנק:</label>
+    <input type="text" id="bank_code" name="bank_code" required value="{{ bank_account.bank_code if bank_account else '' }}" style="width: 4.85cm; height: 0.6cm; font-weight: bold; font-size: 1.3em;">
+</div> 
+
+<div class="form-row">
+    <label for="branch_code" style="font-size: 1.2em; font-weight: bold; width: 2.6cm; height: 0.3cm;display: flex; align-items: center;">קוד סניף:</label>
+    <input type="text" id="branch_code" name="branch_code" required value="{{ bank_account.branch_code if bank_account else '' }}" style="width: 4.85cm; height: 0.6cm; font-weight: bold; font-size: 1.3em;">
+</div> 
+
+<div class="form-row">
+    <label for="account_number" style="font-size: 1.2em; font-weight: bold; width: 2.6cm; height: 0.3cm;display: flex; align-items: center;">מספר חשבון:</label>
+    <input type="text" id="account_number" name="account_number" required value="{{ bank_account.account_number if bank_account else '' }}" style="width: 4.85cm; height: 0.6cm; font-weight: bold; font-size: 1.3em;">
+</div>
+        </div>
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.3cm;"></div>
+
+  <button type="button" style="font-weight: bold; width: 4.5cm; height: 0.5cm; font-size: 17px; background-color: lightyellow; display: flex; align-items: center; justify-content: center;">
+            שמור פרטי בנק
+        </button>
+    </form>
+
+    {% if bank_account %}
+    <form method="POST" action="{{ url_for('delete_bank_account', employee_id=employee.id) }}" onsubmit="return confirm('האם אתה בטוח שברצונך למחוק את פרטי הבנק?');">
+
+    <button type="submit" style="font-weight: bold; width: 4.5cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+            מחק פרטי בנק
+        </button>
+    </form>
+    {% endif %}
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.3cm;"></div>
+
+<!-- Go to Employee Data Page Button -->
+<a href="{{ url_for('contact_form') }}" style="text-decoration: none;">
+    <button type="submit" id="update-button" style="font-weight: bold; width: 4.5cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+        חזרה לרשימת עובדים
+    </button>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+  </div>
+</body>
+</html>

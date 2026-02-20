@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>טופס 161 – הודעת מעביד על פרישה מעבודה</title>
+<script src="{{ url_for('static', filename='formulas.js') }}?v={{ time.time() }}" defer></script>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <style>
+    /* ===== TOP BUTTONS ===== */
+    .top-buttons {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        z-index: 9999;
+        width: 8.2cm;
+    }
+
+    .top-buttons button {
+        font-weight: bold;
+        font-size: 17px;
+        cursor: pointer;
+        width: 100%;
+        height: 0.6cm;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+        transition: 0.2s ease-in-out;
+    }
+
+    .top-buttons button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(0,0,0,0.35);
+    }
+
+    .top-buttons button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+
+/* ===== בסיס כללי ===== */
+body {
+  font-family: Arial, "Segoe UI", sans-serif;
+  direction: rtl;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+  background: #f5f5f5;
+}
+
+/* ===== דף A4 ===== */
+.page {
+  width: 21cm;
+  min-height: 29.7cm;
+  margin: 0 auto;
+  background: #ffffff;
+  box-sizing: border-box;
+  padding: 0.4cm;          /* רווחים דקים מסביב */
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+/* ===== שורות / טורים (אם אתה משתמש בזה) ===== */
+.row {
+  display: flex;
+  margin-bottom: 6px;      /* צמצום רווח בין שורות */
+}
+
+.col {
+  flex: 1;
+  padding: 4px 6px;        /* פחות רווח פנימי */
+  font-size: 13px;
+}
+
+/* רווחים בין טורים */
+.col:first-child {
+  margin-left: 8px;
+}
+.col:nth-child(2) {
+  margin-left: 8px;
+}
+
+/* ===== כותרת טופס ===== */
+.form-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.form-header h1 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.form-header h2 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.form-header .period {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+/* ===== מידע כללי ===== */
+.form-meta {
+  font-size: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===== קופסאות טבלה (אם יש) ===== */
+.table-box {
+  width: 100%;
+  height: 0.55cm;
+  border-left: 1px solid #000;
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+  margin-bottom: 3px;
+  position: relative;
+}
+
+.table-label {
+  font-size: 12px;
+  margin-bottom: 6px;
+  padding-right: 2px;
+}
+
+/* ===== חלקי הטופס (161) ===== */
+.section {
+  background: #ffffff;
+  border: 1px solid #ccc;
+  padding: 8px;            /* היה 15px – צמצום */
+  margin-bottom: 8px;      /* היה 15px – צמצום */
+}
+
+.section-title {
+  font-weight: bold;
+  margin-bottom: 5px;      /* היה 10px */
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 3px;     /* היה 5px */
+  font-size: 13px;
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 4px;      /* היה 8px */
+}
+
+.field {
+  flex: 1 1 200px;
+  margin-left: 6px;        /* היה 10px */
+  margin-bottom: 3px;      /* היה 5px */
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 1px;      /* היה 2px */
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 3px 5px;        /* היה 4px 6px */
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 6px;                /* היה 10px */
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  display: inline-block;
+  font-size: 12px;
+}
+
+/* ===== חתימות ===== */
+.footer {
+  margin-top: 10px;        /* היה 20px */
+}
+
+.signature-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;        /* היה 30px */
+}
+
+.signature-box {
+  width: 45%;
+  border-top: 1px solid #000;
+  padding-top: 3px;        /* היה 5px */
+  text-align: center;
+  font-size: 12px;
+}
+
+/* ===== הדפסה ===== */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .top-buttons {
+      display: none !important;
+      visibility: hidden !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .page {
+    width: 21cm !important;
+    min-height: 29.7cm !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    padding: 0.4cm !important;
+  }
+}
+
+    </style>
+</head>
+<body>
+
+<!-- ===== TOP BUTTONS ===== -->
+<div class="top-buttons">
+
+    <!-- Go to Main Page -->
+    <a href="{{ url_for('index') }}" style="text-decoration:none;">
+        <button type="button" style="background-color:#007bff; color:white;">
+            עבור לדף הראשי
+        </button>
+    </a>
+
+    <!-- Print Form -->
+    <button type="button" onclick="window.print()" style="width: 3.7cm; height: 0.6cm; font-size: 17px; background-color:#28a745; color:white;">
+        הדפס טופס 
+    </button>
+
+    <!-- Save Form -->
+    <button type="button" style="background-color:#007bff; color:white;"> 
+        שמור טופס 
+    </button>
+
+</div>
+
+<form method="POST" action="/form_161">
+<input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+<input type="hidden" name="month" value="{{ selected_month }}">
+<input type="hidden" name="year" value="{{ selected_year }}">
+
+  <div class="page">
+
+    <div class="form-header" style="height: 0.1cm; padding-top: 0.1cm;">
+    <div style="margin-right: 0.01cm;">
+
+<h1>טופס 161 – הודעת מעביד על פרישה מעבודה</h1>
+
+<form>
+
+    <!-- סעיף א – פרטי העובד -->
+    <div class="section">
+        <div class="section-title">סעיף א – פרטי העובד</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="employee_first_name">שם פרטי</label>
+                <input type="text" id="employee_first_name" name="employee_first_name">
+            </div>
+            <div class="field">
+                <label for="employee_last_name">שם משפחה</label>
+                <input type="text" id="employee_last_name" name="employee_last_name">
+            </div>
+            <div class="field">
+                <label for="employee_id">מספר זהות</label>
+                <input type="text" id="employee_id" name="employee_id">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="employee_address">כתובת</label>
+                <input type="text" id="employee_address" name="employee_address">
+            </div>
+            <div class="field">
+                <label for="employee_birth_date">תאריך לידה</label>
+                <input type="date" id="employee_birth_date" name="employee_birth_date">
+            </div>
+        </div>
+    </div>
+
+    <!-- סעיף ב – פרטי המעסיק -->
+    <div class="section">
+        <div class="section-title">סעיף ב – פרטי המעסיק</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="employer_name">שם המעסיק / החברה</label>
+                <input type="text" id="employer_name" name="employer_name">
+            </div>
+            <div class="field">
+                <label for="employer_id">ח.פ / עוסק מורשה</label>
+                <input type="text" id="employer_id" name="employer_id">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="employer_address">כתובת</label>
+                <input type="text" id="employer_address" name="employer_address">
+            </div>
+            <div class="field">
+                <label for="employer_phone">טלפון</label>
+                <input type="text" id="employer_phone" name="employer_phone">
+            </div>
+        </div>
+    </div>
+
+    <!-- סעיף ג – פרטי ההעסקה והפרישה -->
+    <div class="section">
+        <div class="section-title">סעיף ג – פרטי ההעסקה והפרישה</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="employment_start_date">תאריך תחילת עבודה</label>
+                <input type="date" id="employment_start_date" name="employment_start_date">
+            </div>
+            <div class="field">
+                <label for="employment_end_date">תאריך סיום עבודה</label>
+                <input type="date" id="employment_end_date" name="employment_end_date">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label>סיבת הפרישה</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="termination_reason" value="fired"> פיטורים</label>
+                    <label><input type="radio" name="termination_reason" value="resigned"> התפטרות</label>
+                    <label><input type="radio" name="termination_reason" value="retirement"> פרישה לגמלאות</label>
+                    <label><input type="radio" name="termination_reason" value="death"> מוות</label>
+                    <label><input type="radio" name="termination_reason" value="other"> אחר</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- סעיף ד – פרטי שכר ופיצויים -->
+    <div class="section">
+        <div class="section-title">סעיף ד – פרטי שכר ופיצויים</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="last_salary">שכר אחרון (ברוטו)</label>
+                <input type="number" step="0.01" id="last_salary" name="last_salary">
+            </div>
+            <div class="field">
+                <label for="seniority_years">ותק (שנים)</label>
+                <input type="number" step="0.1" id="seniority_years" name="seniority_years">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="severance_paid">סכום פיצויים ששולם בפועל</label>
+                <input type="number" step="0.01" id="severance_paid" name="severance_paid">
+            </div>
+            <div class="field">
+                <label for="severance_in_funds">סכום פיצויים שהופרש בקופות</label>
+                <input type="number" step="0.01" id="severance_in_funds" name="severance_in_funds">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="severance_exempt">סכום פיצויים פטור ממס</label>
+                <input type="number" step="0.01" id="severance_exempt" name="severance_exempt">
+            </div>
+            <div class="field">
+                <label for="severance_taxable">סכום פיצויים חייב במס</label>
+                <input type="number" step="0.01" id="severance_taxable" name="severance_taxable">
+            </div>
+        </div>
+    </div>
+
+    <!-- סעיף ה – פרטי קופות גמל / פנסיה -->
+    <div class="section">
+        <div class="section-title">סעיף ה – פרטי קופות גמל / פנסיה</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="fund_name">שם הקופה</label>
+                <input type="text" id="fund_name" name="fund_name">
+            </div>
+            <div class="field">
+                <label for="fund_number">מספר קופה</label>
+                <input type="text" id="fund_number" name="fund_number">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="fund_balance">סכום צבור בקופה</label>
+                <input type="number" step="0.01" id="fund_balance" name="fund_balance">
+            </div>
+            <div class="field">
+                <label for="fund_released">סכום משוחרר</label>
+                <input type="number" step="0.01" id="fund_released" name="fund_released">
+            </div>
+        </div>
+    </div>
+
+    <!-- סעיף ו – בחירת מסלול מס -->
+    <div class="section">
+        <div class="section-title">סעיף ו – בחירת מסלול מס</div>
+        <div class="field-row">
+            <div class="field">
+                <label>בחירת מסלול</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="tax_route" value="continuity_severance"> רצף פיצויים</label>
+                    <label><input type="radio" name="tax_route" value="continuity_pension"> רצף קצבה</label>
+                    <label><input type="radio" name="tax_route" value="withdrawal"> משיכת כספים</label>
+                    <label><input type="radio" name="tax_route" value="capitalization"> היוון קצבה</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- סעיף ז – הצהרות וחתימות -->
+    <div class="section footer">
+        <div class="section-title">סעיף ז – הצהרות וחתימות</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="form_date">תאריך מילוי הטופס</label>
+                <input type="date" id="form_date" name="form_date">
+            </div>
+        </div>
+        <div class="signature-row">
+            <div class="signature-box">
+                חתימת המעסיק
+            </div>
+            <div class="signature-box">
+                חתימת העובד
+            </div>
+        </div>
+    </div>
+
+</form>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

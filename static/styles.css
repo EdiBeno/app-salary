@@ -1,0 +1,731 @@
+@media (max-width: 480px) {
+
+    /* ===== כפתורים ===== */
+    button {
+        width: 100% !important;
+        height: 1.1cm !important;
+        font-size: 16px !important;
+        margin: 4px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    a button {
+        width: 100% !important;
+    }
+
+    /* Back To Top Button */
+    #backToTopBtn {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 15px !important;
+        width: 70% !important;
+        padding: 10px !important;
+        font-size: 16px !important;
+        display: block !important;
+    }
+
+    /* ===== מיכלי FLEX ===== */
+    div[style*="flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    /* ===== כותרת TAX ===== */
+    .form-row {
+        font-size: 16px !important;
+        padding: 6px !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        height: auto !important;
+        margin: 0 !important;
+        text-align: center !important;
+    }
+
+
+    /* ===== HEADER ראשי ===== */
+    .header {
+        font-size: 20px !important;
+        padding: 8px !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        height: auto !important;
+        text-align: center !important;
+    }
+
+    /* ===== טבלת שעות ===== */
+    #hours-table {
+        width: 100% !important;
+        font-size: 13px !important;
+    }
+
+    #hours-table th,
+    #hours-table td {
+        padding: 2px !important;
+        white-space: nowrap !important;
+    }
+
+    /* ===== קלטים בטבלה ===== */
+    #hours-table input,
+    .hours-table-section td input {
+        width: 1.6cm !important;
+        height: 0.45cm !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    /* ===== טופס ===== */
+    .form-container {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .form-label {
+        font-size: 15px !important;
+    }
+
+    .form-input {
+        font-size: 14px !important;
+        height: 0.45cm !important;
+    }
+
+    /* הסתרת כל העמודות */
+    #hours-table td, #hours-table th {
+        display: none !important;
+    }
+
+    /* עמודות חשובות — נשארות */
+    #hours-table td:nth-child(1),
+    #hours-table th:nth-child(1),
+    #hours-table td:nth-child(2),
+    #hours-table th:nth-child(2),
+    #hours-table td:nth-child(5),
+    #hours-table th:nth-child(5),
+    #hours-table td:nth-child(6),
+    #hours-table th:nth-child(6),
+    #hours-table td:nth-child(16),
+    #hours-table th:nth-child(16),
+    #hours-table td:nth-child(17),
+    #hours-table th:nth-child(17),
+    #hours-table td:nth-child(19),
+    #hours-table th:nth-child(19),
+    #hours-table td:nth-child(25),
+    #hours-table th:nth-child(25) {
+        display: table-cell !important;
+    }
+}
+
+
+
+/* בסיס עיצוב לאפליקציה בעברית */
+body {
+  direction: rtl;
+  text-align: right;
+  margin: auto;
+  max-width: 96vw;
+  overflow-x: hidden;
+}
+
+/* עיצוב למסכים גדולים (דסקטופ) */
+@media screen and (min-width: 768px) {
+  body {
+    font-size: calc(1.1vmin + 0.5vmax);
+    max-width: 96vw;
+    margin: auto;
+    overflow-x: hidden;
+  }
+
+  .form-label,
+  .form-input,
+  input,
+  button,
+  .bold-button,
+  .header {
+    font-size: calc(0.6vw + 12px);
+  }
+
+  .table-box {
+    width: 100%;
+    max-width: 1800px;
+    margin: auto;
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+
+  .table-box td,
+  .table-box th {
+    font-size: calc(0.5vw + 12px);
+  }
+}
+
+
+/* Table styles עיצוב טבלה בסיסי  */
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 17px;
+}
+.table-box td {
+    width: 2.5cm; /* Adjusted width to make columns smaller */
+}
+.small-row td {
+    width: 2.5cm; /* Adjusted width to make columns smaller */
+}
+.bold-header {
+    font-weight: bold;
+}
+.wrap-text {
+    white-space: nowrap;
+}
+/* Additional styles for the table box */
+.table-box {
+    width: 100%;
+    border-collapse: collapse;
+}
+.bold-button {
+    font-weight: bold;
+    font-size: 17px;
+}
+.blue {
+    background-color: blue;
+}
+.gray {
+    background-color: gray;
+}
+.yellow {
+    background-color: yellow;
+}
+ .red-font {
+    color: red;
+}
+.header {
+    background: linear-gradient(to right, yellow, darkblue);
+    color: black;
+    padding: 10px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+ }
+ .table-header {
+     background-color: lightblue;
+     color: black;
+     font-weight: bold;
+     text-align: center;
+ }
+/* Form container styles */
+.form-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(6, auto);
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+
+           /* width: 100%; /* אתה יכול לשנות את הרוחב לפי הצורך */
+           /* padding: 20px;*/
+           /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);*/
+           /* border-radius: 8px;*/
+}
+/* Form column and row styles */
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.form-row {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    direction: rtl;
+}
+    .form-label {
+    font-size: 17px;
+    justify-conte00BFFFnt: center;
+    align-items: center;
+    font-weight: bold;
+}
+.form-input {
+    height: 0.5cm;
+    font-weight: bold;
+    font-size: 15px;
+}
+/* Holidays */
+.holiday {
+  color: lightgreen;
+}
+/* Saturdays */
+.saturday {
+  color: lightblue;
+}
+/* Hover */
+#hours-table tr:hover td {
+  background: #00FFC6;
+}
+/* Body margin */
+body {
+  /* background-color: #1E90FF; /* Vivid Sky Blue */
+  /* background-color: #BF00FF; /* Electric Purple */
+  /* background-color: #FFD300; /* Cyber Yellow */
+  /* background-color: #708090; /* Slate Gray */
+  /* background-color: #00FFC6; /* Mint Green */
+
+    background-color: #f5f5f5;
+    justify-content: center; /* מרכז את התוכן אופקית */
+   /* margin-left: 0.1%;*/
+}
+
+/* 
+#hours-table th:nth-child(25),
+#hours-table td:nth-child(25) {
+    width: 2.15cm !important;
+}
+*/
+
+/* Adjust column A width */
+td:nth-child(1), th:nth-child(1) {
+    width: 2.5cm; /* Increased width to prevent wrapping */
+    white-space: nowrap; /* Ensure no wrapping */
+    border: 1px solid black; /* Add border */
+}
+/* Adjust column B width */
+td:nth-child(2), th:nth-child(2) {
+    width: 2.5cm; /* Increased width to prevent wrapping */
+    white-space: nowrap; /* Ensure no wrapping */
+    border: 1px solid black; /* Add border */
+}
+/* Increase height of the first row */
+.table-box th {
+    height: 0.6cm; /* Increased height */
+}
+.row-height {
+    height: 0.2cm;
+}
+.hours-calculated {
+    font-weight: bold;
+    width: 2cm;
+    text-align: center;
+}
+
+/* Hide specific columns */
+td:nth-child(3), th:nth-child(3),
+td:nth-child(4), th:nth-child(4),
+td:nth-child(7), th:nth-child(7),
+td:nth-child(8), th:nth-child(8),
+td:nth-child(9), th:nth-child(9),
+td:nth-child(10), th:nth-child(10),
+td:nth-child(11), th:nth-child(11),
+td:nth-child(12), th:nth-child(12),
+td:nth-child(13), th:nth-child(13),
+td:nth-child(14), th:nth-child(14),
+td:nth-child(15), th:nth-child(15),
+td:nth-child(18), th:nth-child(18),
+td:nth-child(20), th:nth-child(20),
+td:nth-child(21), th:nth-child(21),
+td:nth-child(22), th:nth-child(22),
+td:nth-child(23), th:nth-child(23),
+td:nth-child(24), th:nth-child(24) {
+    display: none;
+}
+
+/* Ensure columns 1, 2, 5, 6, 16, 17, 19, and 25 are visible */
+td:nth-child(1), th:nth-child(1),
+td:nth-child(2), th:nth-child(2),
+td:nth-child(5), th:nth-child(5),
+td:nth-child(6), th:nth-child(6),
+td:nth-child(16), th:nth-child(16),
+td:nth-child(17), th:nth-child(17),
+td:nth-child(19), th:nth-child(19),
+td:nth-child(25), th:nth-child(25) {
+    display: table-cell;
+}
+
+
+#employeeDataContainersalarySection tr {
+   height: 0.54cm !important;   
+}
+
+/* Ensure all columns in Salary Form are visible */
+#employeeDataContainersalarySection td, #employeeDataContainersalarySection th {
+   display: table-cell !important;  
+      visibility: visible !important;  
+   height: 0.54cm !important;   
+   line-height: 0.54cm !important; 
+   padding: 0 !important;       
+   font-size: 15px;
+}
+
+#employeeDataContainersalarySection table {
+    outline: 1px solid blue !important;
+}
+
+#employeeDataContainersalarySection input,
+#employeeDataContainersalarySection label {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Set the table to RTL */
+table {
+    direction: rtl; /* This will flip the layout to RTL */
+}
+
+/* Align text and inputs for RTL */
+td {
+    text-align: right; /* Align table cell content to the right */
+}
+
+input {
+    direction: rtl; /* Set input text direction to RTL */
+    text-align: right; /* Align the text inside inputs to the right */
+    font-weight: bold;
+    width: 100%;
+    height: 100%;
+    font-size: 15px;
+   /* box-sizing: border-box;*/
+}
+
+/* Highlight focused input for better navigation */
+input:focus {
+    border: 2px solid blue;
+    background-color: #f0f8ff;
+}
+/* Button container styles */
+.button-container {
+    display: flex;
+    gap: 10px;
+}
+
+.button-container a {
+    text-decoration: none;
+}
+
+.button-container button {
+    font-weight: bold;
+    width: 4cm;
+    height: 0.5cm;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4CAF50;
+   # background-color: #45a049;
+    color: #your-text-color;
+}
+
+/* Style for radio buttons */
+input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    width: 1.3em;
+    height: 1.3em;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    outline: none;
+    box-shadow: 0 0 5px 0px yellow inset;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+    background-color: yellow;
+    box-shadow: 0 0 0 3px lightyellow inset;
+    background-image: radial-gradient(circle, black 50%, transparent 50%);
+}
+
+select {
+    width: 5em;
+    height: 2em;
+}
+
+
+/* Style for MSG Warning Over 42 Hours */
+/*   GLOBAL POPUP OVERLAY */
+#popup-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.35);
+  display: none;
+  z-index: 9990;
+  pointer-events: auto;
+}
+
+
+/*   WEEKLY WARNING POPUP (TOP) */
+#weekly-warning {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+
+  display: none;
+  background-color: #ffe5e5;
+  color: #900;
+  padding: 0.6rem;
+  border: 2px solid #900;
+  max-width: 860px;
+  max-height: 200px;
+  overflow-y: auto;
+
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  direction: rtl;
+  border-radius: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+#weekly-warning .warning-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background-color: #fff0f0;
+  border-radius: 4px;
+}
+
+
+/* Weekly warning button */
+.confirm-button,
+.weekly-warning-btn {
+  background-color: #900;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.confirm-button:hover,
+.weekly-warning-btn:hover {
+  background-color: #b00;
+}
+
+
+/*   WINDOWS SUCCESS POPUP (CENTER) */
+#windows-success-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+
+  background-color: #e6f4ea;
+  color: #155724;
+  border: 2px solid #28a745;
+  padding: 18px;
+  min-width: 320px;
+  max-width: 450px;
+  border-radius: 6px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.35);
+  display: none;
+
+  direction: rtl;
+  font-family: Arial, sans-serif;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+/* Success popup button */
+.windows-success-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.windows-success-btn:hover {
+  background-color: #218838;
+}
+
+
+/* === HIIDEN DISPLAY ROW ON SALARY === */
+.personal-only {
+  display: none;
+}
+
+.contract-only {
+  display: none;
+}
+
+.above-ceiling-only {
+  display: table-cell;
+}
+
+
+/* === PRINT STYLES === */
+@media print {
+    body {
+        background-color: white !important;
+        margin: 0;
+        padding: 0;
+        font-size: 10pt;
+        direction: rtl;
+    }
+
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Show only the salary section */
+    #employeeDataContainersalarySection,
+    #employeeDataContainersalarySection * {
+        visibility: visible;
+    }
+
+    /* Position salary section for A4 print */
+    #employeeDataContainersalarySection {
+        position: relative;
+        width: 190mm;        
+        /* remove min-height to avoid extra blank pages */
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+        background: white;        
+        page-break-after: avoid;  
+        page-break-before: avoid; 
+    }
+
+    /* Hide all controls and buttons */
+    .controls-row,
+    .back-button,
+    .delete-button,
+    .renew-button,
+    .action-button,
+    .print-button {
+        display: none !important;
+    }
+
+    /* Table formatting */
+    #employeeDataContainersalarySection table {
+        width: 100%;
+        border-collapse: collapse;
+        page-break-inside: avoid;
+        font-size: 10pt;
+    }
+
+    #employeeDataContainersalarySection th,
+    #employeeDataContainersalarySection td {
+        border: 1px solid #000;
+        padding: 2px 4px;
+        line-height: 1.2;
+        font-size: 10pt;
+        color: black;
+    }
+
+    #employeeDataContainersalarySection tr {
+        height: auto;
+    }
+
+    /* Headings and info inside salary section */
+    #employeeDataContainersalarySection h2 {
+        color: black;
+        font-size: 14pt;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    #employeeDataContainersalarySection .session-info {
+        font-size: 10pt;
+        color: black;
+        margin-bottom: 10px;
+    }
+
+    /* Page setup */
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+}
+
+
+/* === Scrool Down Button === */
+
+#backToTopBtn {
+  position: fixed;
+  bottom: 20px;
+  left: 900px;
+  z-index: 99;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;   /* reduced padding → half the height */
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;   /* makes text bold */
+  display: none;
+}
+
+#backToTopBtn:hover {
+  background-color: #0056b3;
+}
+
+
+
+/* עיצוב למסכים קטנים (ניידים) */
+@media screen and (max-width: 767px) {
+  body {
+    font-size: 16px;
+    padding: 1rem;
+    overflow-x: hidden;
+  }
+
+  /* Stack form rows vertically on mobile */
+  .form-row {
+    flex-direction: column;
+    align-items: stretch;
+    direction: rtl; /* keep Hebrew RTL */
+  }
+
+  /* Make inputs and buttons full width */
+  .form-label,
+  .form-input,
+  input,
+  select,
+  textarea,
+  button {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.8rem;
+    font-size: 16px;
+  }
+
+  /* Tables scroll horizontally instead of shrinking */
+  .table-box {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-box table {
+    min-width: 500px;
+  }
+
+  table, th, td {
+    font-size: 14px;
+  }
+}

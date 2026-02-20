@@ -1,0 +1,96 @@
+/* Table styles */
+.container {
+    display: flex;
+}
+.column1 {
+    width: 0.2cm;
+    background-color: #ffffff; /* Leave white */
+}
+.column2 {
+    flex: 1;
+    background-color: #ffffff; /* Optional: for visual distinction */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the content horizontally */
+}
+h1 {
+    margin: 0; /* Remove default margin */
+    height: 20px; /* Set a specific height for the heading */
+    display: flex;
+    align-items: center; /* Center the content vertically */
+    justify-content: center; /* Center the content horizontally */
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    direction: rtl;
+    font-size: 14px;
+}
+/* Body margin */
+body {
+    background-color: #f9f9f9;
+    justify-content: center; /* מרכז את התוכן אופקית */
+}
+th {
+    background-color: lightblue;
+    border: 1px solid black;
+    text-align: center;
+    font-size: 17px; /* Adjusted font size to 17px */
+    font-weight: bold; /* Make font bold */
+}
+td {
+    background-color: white;
+    height: 0.3cm; /* Set row height to 0.3cm */
+    border: 1px solid black;
+    text-align: center;
+    font-size: 17px; /* Adjusted font size to 17px */
+    font-weight: bold; /* Make font bold */
+}
+.table-box td {
+    width: 2.5cm; /* Adjusted width to make columns smaller */
+}
+.small-row td {
+    width: 2.5cm; /* Adjusted width to make columns smaller */
+}
+.bold-header {
+    font-weight: bold;
+}
+.wrap-text {
+    white-space: nowrap;
+}
+/* Additional styles for the table box */
+.table-box {
+    width: 100%;
+    border-collapse: collapse;
+}
+.bold-button {
+    font-weight: bold;
+    font-size: 17px;
+}
+.blue {
+    background-color: blue;
+}
+.gray {
+    background-color: gray;
+}
+.yellow {
+    background-color: yellow;
+}
+.button-container {
+    display: flex;
+    gap: 10px; /* Adjust the gap value to control the space between buttons */
+}
+.button-container a {
+    text-decoration: none;
+}
+.button-container button {
+    font-weight: bold;
+    width: 4cm;
+    height: 0.5cm;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #your-color; /* Replace with your desired background color */
+    color: #your-text-color; /* Replace with your desired text color */
+}

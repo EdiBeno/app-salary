@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוכנה חישוב שכר</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<script src="{{ url_for('static', filename='formulas.js') }}?v={{ time.time() }}" defer></script>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <style>
+    /* Popup Hide Yearly overlay */
+    .section {
+      display: none;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body dir="rtl">
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.2cm;"></div>
+
+        <div class="form-inline form-label">
+
+<form method="GET" action="/" id="reloadForm">
+
+  <!-- Month Display Hebrew -->
+  <label for="monthResult" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">דו"ח לחודש:</label>
+  <input type="text" id="monthResult" name="monthResult" value="{{ month_result }}" readonly
+         style="width: 2.9cm; font-weight: bold; text-align: center; height: 0.4cm; font-size: 15px; background-color: lightyellow;">
+
+  <!-- Month Selector -->
+<label for="employeeMonth" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">בחירת חודש :</label>
+<select id="employeeMonth" name="month" onchange="document.getElementById('reloadForm').submit(); updateDays(); updateMonthResult();" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 15px;">
+      {% for i in range(1,13) %}
+          {% set val = "%02d"|format(i) %}
+          <option value="{{ val }}" {% if employeeMonth == val %}selected{% endif %}>{{ months[i-1] }}</option>
+      {% endfor %}
+  </select>
+
+  <!-- Year Selector -->
+<label for="employeeYear" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">בחירת שנה :</label>
+<select id="employeeYear" name="year" onchange="document.getElementById('reloadForm').submit(); updateDays(); updateMonthResult();" style="width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 15px;">
+      {% for year in years %}
+          <option value="{{ year }}" {% if employeeYear == year|string %}selected{% endif %}>{{ year }}</option>
+      {% endfor %}
+  </select>
+
+    <!-- Employee Name Dropdown -->
+
+    <label for="employee_id" style="width: 2.2cm; font-weight: bold; text-right: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">שם העובד :</label>
+<select id="employee_id" name="employee_id" onchange="document.getElementById('reloadForm').submit(); updateEmployeeDetails();" 
+        style="width: 5.1cm; font-weight: bold; font-size: 15px; background-color: lightyellow; text-align: center; white-space: nowrap;border: 1px solid black; outline: 1px solid black; height: 0.53cm;">
+        <option value="">בחר עובד</option>
+        {% for employee in employees %}
+           <option value="{{ employee.id }}"
+               {% if employee.id|string == selected_employee_id %}selected{% endif %}>
+            {{ employee.employee_name }}
+        </option>
+        {% endfor %}
+    </select>
+
+<form method="POST" action="/" onsubmit="return collectHoursTable();">
+  <input type="hidden" name="form_type" value="save_all_data">
+  <input type="hidden" id="hours_table_json" name="hours_table_json" />
+
+  <input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+  <input type="hidden" name="employeeMonth" value="{{ employeeMonth }}">
+  <input type="hidden" name="employeeYear" value="{{ employeeYear }}">
+
+  <!-- Contact Info -->
+
+<!-- Address -->
+<label for="address" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">כתובת :</label>
+<input type="text" id="address" name="address" value="{{ form_data.get('address', '') }}" 
+       style="width: 4cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- City -->
+<label for="city" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">עיר :</label>
+<input type="text" id="city" name="city" value="{{ form_data.get('city', '') }}" 
+       style="width: 3.25cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Postal Code -->
+<label for="postal_code" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">מיקוד :</label>
+<input type="text" id="postal_code" name="postal_code" value="{{ form_data.get('postal_code', '') }}" 
+       style="width: 1.8cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Phone -->
+<label for="phone" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">טלפון :</label>
+<input type="text" id="phone" name="phone" value="{{ form_data.get('phone', '') }}" 
+       style="width: 2.6cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Hourly Rate -->
+<label for="hourly_rate" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">תשלום לשעה :</label>
+<input type="text" id="hourly_rate" name="hourly_rate" value="{{ form_data.get('hourly_rate', '') }}" 
+       style="width: 1.4cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; background-color: lightyellow; font-size: 14px;">
+
+<!-- Contract Status -->
+<label for="contract_status" style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">סוג חוזה :</label>
+<input type="text" id="contract_status" name="contract_status" value="{{ form_data.get('contract_status', '') }}" 
+       style="width: 1.6cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.42cm; font-size: 15px;">
+
+<!-- Hidden ID Number  -->
+<label for="id_number" style="display: none; width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">מספר זהות :</label>
+<input type="text" id="id_number" name="id_number" value="{{ form_data.get('id_number', '') }}" 
+       style="display: none; width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Hidden Work Percent Status  -->
+<label for="work_percent" style="display: none; width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">אחוז משרה :</label>
+<input type="text" id="work_percent" name="work_percent" value="{{ form_data.get('work_percent', '') }}" 
+       style="display: none; width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--Hidden Thirteenth Salary -->
+<label for="thirteenth_salary" style="display: none;">משכורת י"ג</label>
+<input type="text" id="thirteenth_salary" name="thirteenth_salary" value="{{ form_data.get('thirteenth_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--Hidden Mobile Value -->
+<label for="mobile_value" style="display: none;">שווי טלפון נייד :</label>
+<input type="text" id="mobile_value" name="mobile_value" value="{{ form_data.get('mobile_value', '') }}" 
+       style="display: none; width: 1.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--Hidden Clothing Value -->
+<label for="clothing_value" style="display: none;">שווי ביגוד :</label>
+<input type="text" id="clothing_value" name="clothing_value" value="{{ form_data.get('clothing_value', '') }}" 
+       style="display: none; width: 3cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--Hidden Lunch Value -->
+<label for="lunch_value" style="display: none;">שווי ארוחת צהריים :</label>
+<input type="text" id="lunch_value" name="lunch_value" value="{{ form_data.get('lunch_value', '') }}" 
+       style="display: none; width: 2cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden date_of_birth Value -->
+<label for="date_of_birth" style="display: none;">תאריך לידה :</label>
+<input type="text" id="date_of_birth" name="date_of_birth" value="{{ form_data.get('date_of_birth', '') }}" 
+       style="display: none; width: 2.3cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden start_date Job Value -->
+<label for="start_date" style="display: none;">תחילת עבודה :</label>
+<input type="text" id="start_date" name="start_date" value="{{ form_data.get('start_date', '') }}" 
+       style="display: none; width: 2.3cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden total_work_days Job Value -->
+<label for="total_work_days" style="display: none;">ימי עבודה :</label>
+<input type="text" id="total_work_days" name="total_work_days" value="{{ form_data.get('total_work_days', '') }}" 
+       style="display: none; width: 1.95cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden total_missing_hours Job Value -->
+<label for="total_missing_hours" style="display: none;">שע' עבודה :</label>
+<input type="text" id="total_missing_hours" name="total_missing_hours" value="{{ form_data.get('total_missing_hours', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Extra Hours Regular Job Value -->
+<label for="final_extra_hours_regular" style="display: none;">שע' נוספות רגיל :</label>
+<input type="text" id="final_extra_hours_regular" name="final_extra_hours_regular" value="{{ form_data.get('final_extra_hours_regular', '') }}" 
+       style="display: none; width: 1.4cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Extra Hours Weekend Job Value -->
+<label for="final_extra_hours_weekend" style="display: none;">שע' נוספות שבת וחג :</label>
+<input type="text" id="final_extra_hours_weekend" name="final_extra_hours_weekend" value="{{ form_data.get('final_extra_hours_weekend', '') }}" 
+       style="display: none; width: 1.4cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Hidden Total Salary Pension Funds -->
+    <label for="total_salary_pension_funds" style="display: none;">סה"כ שכר חייב בקופות גמל:</label>
+<input type="text" id="total_salary_pension_funds" name="total_salary_pension_funds" value="{{ form_data.get('total_salary_pension_funds', '') }}" 
+       style="display: none; width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Hidden Amount Tax Credit Points Monthly -->
+    <label for="amount_tax_credit_points_monthly" style="display: none;">שווי נקודות זיכוי:</label>
+<input type="text" id="amount_tax_credit_points_monthly" name="amount_tax_credit_points_monthly" value="{{ form_data.get('amount_tax_credit_points_monthly', '') }}" 
+       style="display: none; width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Hidden Income Tax Before Credit -->
+    <label for="income_tax_before_credit" style="display: none;">מס הכנסה לפני זיכוי:</label>
+<input type="text" id="income_tax_before_credit" name="income_tax_before_credit" value="{{ form_data.get('income_tax_before_credit', '') }}" 
+       style="display: none; width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!-- Hidden City Value Percentage -->
+    <label for="city_value_percentage" style="display: none;">אחוז זיכוי ישוב מיוחד:</label>
+<input type="text" id="city_value_percentage" name="city_value_percentage" value="{{ form_data.get('city_value_percentage', '') }}" 
+       style="display: none; width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--Hidden Monthly City Tax Top -->
+    <label for="monthly_city_tax_tops" style="display: none;">תקרת זיכוי ישוב חודשי:</label>
+<input type="text" id="monthly_city_tax_tops" name="monthly_city_tax_tops" value="{{ form_data.get('monthly_city_tax_tops', '') }}" 
+       style="display: none; width: 2.35cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--Hidden Totals Lunch Value -->
+    <label for="totals_lunch_value" style="display: none;">סה"כ תשלום ארוחות:</label>
+<input type="text" id="totals_lunch_value" name="totals_lunch_value" value="{{ form_data.get('totals_lunch_value', '') }}" 
+       style="display: none; width: 2cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Paid Extra Hours Regular Job Value -->
+<label for="hours125_regular_salary" style="display: none;">סכום שע' נוספות 125 רגיל :</label>
+<input type="text" id="hours125_regular_salary" name="hours125_regular_salary" value="{{ form_data.get('hours125_regular_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Paid Extra Hours Weekend Job Value -->
+<label for="hours150_regular_salary" style="display: none;">סכום שע' נוספות 150 רגיל :</label>
+<input type="text" id="hours150_regular_salary" name="hours150_regular_salary" value="{{ form_data.get('hours150_regular_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Paid Extra Hours 150 Holidays Saturday Job Value -->
+<label for="hours150_holidays_saturday_salary" style="display: none;">סכום שע' נוספות 150 שבת וחג :</label>
+<input type="text" id="hours150_holidays_saturday_salary" name="hours150_holidays_saturday_salary" value="{{ form_data.get('hours150_holidays_saturday_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Paid Extra Hours 175 Holidays Saturday Job Value -->
+<label for="hours175_holidays_saturday_salary" style="display: none;">סכום שע' נוספות 175 שבת וחג :</label>
+<input type="text" id="hours175_holidays_saturday_salary" name="hours175_holidays_saturday_salary" value="{{ form_data.get('hours175_holidays_saturday_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Paid Extra Hours 200 Holidays Saturday Job Value -->
+<label for="hours200_holidays_saturday_salary" style="display: none;">סכום שע' נוספות 200 שבת וחג :</label>
+<input type="text" id="hours200_holidays_saturday_salary" name="hours200_holidays_saturday_salary" value="{{ form_data.get('hours200_holidays_saturday_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+<!--  Hidden Final Food Break Unpaid Salary Job Value -->
+<label for="food_break_unpaid_salary" style="display: none;">הורדה הפסקת אוכל :</label>
+<input type="text" id="food_break_unpaid_salary" name="food_break_unpaid_salary" value="{{ form_data.get('food_break_unpaid_salary', '') }}" 
+       style="display: none; width: 1.9cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 15px;">
+
+    <!-- Add an empty row with small height -->
+    <div style="height: 0.1cm;"></div>
+
+<!-- MAIN CONTAINER -->
+<div class="main-container" style="display: flex; height: 100%; direction: rtl;">
+
+    <!-- HOURS TABLE SECTION: workHoursSection  -->
+
+<!-- Right Side: Dynamic Table (40%) -->
+<div style="flex: 0.395; overflow-y: auto; border-left: 2px solid black; padding: 1px;">
+  <table id="hours-table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th class="table-header special-border">יום</th>
+        <th class="table-header special-border">תאריך</th>
+        <th class="table-header">שבת</th>
+        <th class="table-header">חג</th>
+        <th class="table-header">שעת התחלה</th>
+        <th class="table-header">שעת סיום</th>
+        <th class="table-header">חישוב שעות ביום</th>
+        <th class="table-header">סה"כ שעות יום רגיל</th>
+        <th class="table-header">שע' נוספות יום רגיל</th>
+        <th class="table-header">שע' 125% יום רגיל</th>
+        <th class="table-header">שע' 150% יום רגיל</th>
+        <th class="table-header">שע' נוספות שבת/חג</th>
+        <th class="table-header">שע' 150% שבת/חג</th>
+        <th class="table-header">שע' 175% שבת/חג</th>
+        <th class="table-header">שע' 200% שבת/חג</th>
+        <th class="table-header">מחלה</th>
+        <th class="table-header">חופשה</th>
+        <th class="table-header">הפסקות אוכל (הורדה)</th>
+        <th class="table-header">סה"כ שעות</th>
+        <th class="table-header">חישוב</th>
+        <th class="table-header">חישוב</th>
+        <th class="table-header">חישוב</th>
+        <th class="table-header">סה"כ ימי עבודה</th>
+        <th class="table-header">סה"כ שע' עבודה</th>
+        <th class="table-header">סה"כ תשלום מקדמה</th>
+      </tr>
+    </thead>
+  <tbody id="table-body">
+    <!-- Dynamic rows go here -->
+  </tbody>
+</table>
+</div>
+
+  <!-- Spacer Between Columns -->
+  <div style="width: 0.001cm;"></div>
+
+  <!-- Left Side: Labels and Inputs (60%) -->
+    <div class="form-section" style="flex: 0.605; padding: 5px; text-align: right;">
+
+<!-- Popup container for Weekly Over 42 Hours Warning -->
+<div id="weekly-warning" style="display:none;"></div>
+
+  <div style="width: 0.001cm;"></div>
+
+<!-- Popup container for Show Windows Error Success Warning -->
+<div id="windows-success-box" style="display:none;"></div>
+
+    <!-- Tax Form Section -->
+<div style="display: flex; align-items: center; gap: 0.1cm;">
+  <div class="form-row" style="margin-bottom: 1px;">
+    <div style="font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; margin-right: 12.9cm; background-color: lightgreen; display: flex; align-items: center; justify-content: center; font-size: 21px;">
+      חישוב מיסים:
+    </div>
+ </div>
+</div>
+
+                     <!-- Add Column Fix Add Line -->
+<div style="width: 98%; display: flex; justify-content: flex-end; margin-bottom: 10px;">
+
+             <!-- Search City For Tax Point -->
+    <div style="text-align: right; margin-bottom: 10px;">
+
+<!-- Final City Tax Benefit -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="final_city_tax_benefit" style="font-weight: bold; height: 0.5cm; background-color: #F0F0F0; font-size: 17px;">סכום זיכוי ישוב חודשי:</label>
+    <input type="text" id="final_city_tax_benefit" name="final_city_tax_benefit" class="form-input" value="{{ form_data.get('final_city_tax_benefit', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 3.77cm;">
+</div>
+
+<!-- Payments Section -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="form-label" style="font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">תשלומים:</label>
+</div>
+
+<!-- Basic Salary -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="basic_salary" style="font-weight: bold; height: 0.5cm; font-size: 17px;">משכורת בסיסית:</label>
+    <input type="text" id="basic_salary" name="basic_salary" class="form-input" value="{{ form_data.get('basic_salary', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 4.84cm;">
+</div>
+
+<!-- Additional Payments -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="additional_payments" style="font-weight: bold; height: 0.5cm; font-size: 17px;">תוספות שונות שאינן מזכות בזכויות סוציאליות:</label>
+    <input type="text" id="additional_payments" name="additional_payments" class="form-input" value="{{ form_data.get('additional_payments', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-left: 1.2cm;">
+</div>
+
+<!-- Cars Value -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="cars_value" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שווי רכב צמוד:</label>
+    <input type="text" id="cars_value" name="cars_value" class="form-input" value="{{ form_data.get('cars_value', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 5.07cm;">
+</div>
+
+<!-- Net Value -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="net_value" style="font-weight: bold; height: 0.5cm; font-size: 17px;">נטו לגילום ללא הפרשות סוציאליות:</label>
+    <input type="text" id="net_value" name="net_value" class="form-input" value="{{ form_data.get('net_value', '0.0') }}" readonly style="width: 2.9cm; height: 0.5cm; margin-right: 1.8cm;">
+</div>
+
+<!-- Gross Salary -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="gross_salary" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שכר ברוטו:</label>
+    <input type="text" id="gross_salary" name="gross_salary" class="form-input" value="{{ form_data.get('gross_salary', '0.0') }}" readonly style="width: 2.9cm; height: 0.5cm; margin-right: 5.65cm;">
+</div>
+
+<!-- Above Ceiling Value -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="above_ceiling_value" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שווי גמול מעל התקרה:</label>
+    <input type="text" id="above_ceiling_value" name="above_ceiling_value" class="form-input" value="{{ form_data.get('above_ceiling_value', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 3.83cm;">
+</div>
+
+<!-- Above Ceiling Fund -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="above_ceiling_fund" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שווי קרן השתלמות מעל התקרה:</label>
+    <input type="text" id="above_ceiling_fund" name="above_ceiling_fund" class="form-input" value="{{ form_data.get('above_ceiling_fund', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 2.3cm;">
+</div>
+
+<!-- Above Ceiling Compensation -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="above_ceiling_compensation" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שווי הפרשה לפיצויים מעל התקרה:</label>
+    <input type="text" id="above_ceiling_compensation" name="above_ceiling_compensation" class="form-input" value="{{ form_data.get('above_ceiling_compensation', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.85cm;">
+</div>
+
+<!-- Gross Taxable -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="gross_taxable" style="font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">ברוטו חייב במס:</label>
+    <input type="text" id="gross_taxable" name="gross_taxable" class="form-input" value="{{ form_data.get('gross_taxable', '0.0') }}" readonly style="width: 2.9cm; height: 0.5cm; background-color: #e6f7ff; margin-right: 4.9cm;">
+    </div>
+
+    <!-- Spacer -->
+    <div style="height: 0.9cm;"></div>
+
+      <div id="yearly1" class="section">
+
+<!-- Yearly Employer Contributions Section Header -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="form-label" style="width: 7.1cm; font-weight: bold; height: 0.5cm; font-size: 19px; background-color: lightgreen; white-space: nowrap;">דו"ח העדרויות שנתי :</label>
+</div>
+
+<!--Yearly Sick Days Salary -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="sick_days_salary" style="font-weight: bold; height: 0.5cm; font-size: 17px;">ימי מחלה חודשי:</label>
+    <input type="text" id="sick_days_salary" name="sick_days_salary" class="form-input" value="{{ form_data.get('sick_days_salary', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.2cm;">
+</div>
+
+<!--Yearly Sick Days Yearly Total -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="sick_days_salary_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">סה"כ ימי מחלה בשנה:</label>
+    <input type="text" id="sick_days_salary_yearly" name="sick_days_salary_yearly" class="form-input" value="{{ form_data.get('sick_days_salary_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.3cm;">
+</div>
+
+<!--Yearly Sick Days Entitlement -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="sick_days_entitlement" style="font-weight: bold; height: 0.5cm; font-size: 17px;">זכאות ימי מחלה:</label>
+    <input type="text" id="sick_days_entitlement" name="sick_days_entitlement" class="form-input"  value="18.00" readonly style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.25cm;">
+</div>
+
+<!--Yearly Sick Days Balance -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="sick_days_balance_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">יתרת ימי מחלה שנתי:</label>
+    <input type="text" id="sick_days_balance_yearly" name="sick_days_balance_yearly" class="form-input" value="{{ form_data.get('sick_days_balance_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.48cm;">
+</div>
+
+<!--Yearly Vacation Days Salary -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="vacation_days_salary" style="font-weight: bold; height: 0.5cm; font-size: 17px;">ימי חופשה חודשי:</label>
+    <input type="text" id="vacation_days_salary" name="vacation_days_salary" class="form-input" value="{{ form_data.get('vacation_days_salary', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1cm;">
+</div>
+
+<!--Yearly Vacation Yearly Total -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="vacation_days_salary_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">סה"כ ימי חופשה בשנה:</label>
+    <input type="text" id="vacation_days_salary_yearly" name="vacation_days_salary_yearly" class="form-input" value="{{ form_data.get('vacation_days_salary_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.15cm;">
+</div>
+
+<!--Yearly Vacation Entitlement -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="vacation_days_entitlement" style="font-weight: bold; height: 0.5cm; font-size: 17px;">זכאות ימי חופשה:</label>
+    <input type="text" id="vacation_days_entitlement" name="vacation_days_entitlement" class="form-input"  value="12.00" readonly style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.1cm;">
+</div>
+
+<!-- Yearly Vacation Balance -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="vacation_balance_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">יתרת ימי חופשה שנתי:</label>
+    <input type="text" id="vacation_balance_yearly" name="vacation_balance_yearly" class="form-input" value="{{ form_data.get('vacation_balance_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.3cm;">
+</div>
+
+<!-- Yearly Gross Taxable Yearly -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="gross_taxable_yearly" style="font-weight: bold; height: 0.5cm; background-color: lightyellow; font-size: 17px;">ברוטו חייב במס שנתי:</label>
+    <input type="text" id="gross_taxable_yearly" name="gross_taxable_yearly" class="form-input" value="{{ form_data.get('gross_taxable_yearly', '0.0') }}" readonly style="width: 2.9cm; height: 0.5cm; background-color: #e6f7ff; margin-right: 0.45cm;">
+     </div>
+   </div>
+</div>
+
+        <div style="display: flex; align-items: center; gap: 1.3cm;">
+
+    <!-- Spacer -->
+
+    <!-- Label 2 Section -->
+    <div style="text-align: right; margin-bottom: 15px;">
+
+<!-- Tax Level Percentage -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="tax_level_precente" style="font-weight: bold; height: 0.5cm; background-color: #F0F0F0; font-size: 17px;">
+        מדרגת מס הכנסה %:
+    </label>
+    <input type="text" id="tax_level_precente" name="tax_level_precente" class="form-input"
+        value="{{ form_data.get('tax_level_precente', '0.0') }}" 
+        style="width: 2.9cm; height: 0.5cm; margin-right: 0.1cm;" readonly>
+</div>
+
+<!-- Employer Contributions Section Header -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="form-label" style="font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow; white-space: nowrap;">הפרשות מעביד :</label>
+</div>
+
+<!-- Pension Fund -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="pension_fund" style="font-weight: bold; height: 0.5cm; font-size: 17px;">קופות גמל:</label>
+    <input type="text" id="pension_fund" name="pension_fund" class="form-input" value="{{ form_data.get('pension_fund', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.75cm;">
+</div>
+
+<!-- Compensation -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="compensation" style="font-weight: bold; height: 0.5cm; font-size: 17px;">פיצויים:</label>
+    <input type="text" id="compensation" name="compensation" class="form-input" value="{{ form_data.get('compensation', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 2.2cm;">
+</div>
+
+<!-- Study Fund -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="study_fund" style="font-weight: bold; height: 0.5cm; font-size: 17px;">קרן השתלמות:</label>
+    <input type="text" id="study_fund" name="study_fund" class="form-input" value="{{ form_data.get('study_fund', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.15cm;">
+</div>
+
+<!-- Disability -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="disability" style="font-weight: bold; height: 0.5cm; font-size: 17px;">אובדן כושר:</label>
+    <input type="text" id="disability" name="disability" class="form-input" value="{{ form_data.get('disability', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.5cm;">
+</div>
+
+<!-- Miscellaneous -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="miscellaneous" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שונות:</label>
+    <input type="text" id="miscellaneous" name="miscellaneous" class="form-input" value="{{ form_data.get('miscellaneous', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 2.45cm;">
+</div>
+
+<!-- National Insurance -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="national_insurance" style="font-weight: bold; height: 0.5cm; font-size: 17px;">ביטוח לאומי:</label>
+    <input type="text" id="national_insurance" name="national_insurance" class="form-input" value="{{ form_data.get('national_insurance', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.4cm;">
+</div>
+
+<!-- Salary Tax -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="salary_tax" style="font-weight: bold; height: 0.5cm; font-size: 17px;">מס שכר:</label>
+    <input type="text" id="salary_tax" name="salary_tax" class="form-input" value="{{ form_data.get('salary_tax', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 2.1cm;">
+</div>
+
+    <!-- Spacer -->
+    <div style="height: 0.8cm;"></div>
+
+<!-- Total Employer Contributions -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="total_employer_contributions" style="width: 3.55cm; font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">סה"כ הפרשות מעביד:</label>
+    <input type="text" id="total_employer_contributions" name="total_employer_contributions" class="form-input" 
+        value="{{ form_data.get('total_employer_contributions', '0.0') }}" readonly 
+        style="width: 2.9cm; height: 0.5cm; background-color: #e6f7ff; margin-right: 0.001cm;">
+    </div>
+
+<!-- Total Salary Cost -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="total_salary_cost" style="width: 3.55cm; font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">עלות השכר:</label>
+    <input type="text" id="total_salary_cost" name="total_salary_cost" class="form-input" 
+        value="{{ form_data.get('total_salary_cost', '0.0') }}" readonly 
+        style="width: 2.9cm; height: 0.5cm; background-color: #F0F0F0; margin-right: 0.001cm;">
+    </div>
+
+    <!-- Spacer -->
+    <div style="height: 0.01cm;"></div>
+
+      <div id="yearly2" class="section">
+
+<!-- Yearly Employer Contributions Section Header -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="form-label" style="width: 6.65cm; font-weight: bold; height: 0.5cm; font-size: 19px; background-color: lightgreen; white-space: nowrap;">הפרשות מעביד מצטבר שנתי :</label>
+</div>
+
+<!-- Yearly Pension Fund -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="pension_fund_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">קופות גמל שנתי:</label>
+    <input type="text" id="pension_fund_yearly" name="pension_fund_yearly" class="form-input" value="{{ form_data.get('pension_fund_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.8cm;">
+</div>
+
+<!-- Yearly Compensation -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="compensation_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">פיצויים שנתי:</label>
+    <input type="text" id="compensation_yearly" name="compensation_yearly" class="form-input" value="{{ form_data.get('compensation_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.2cm;">
+</div>
+
+<!-- Yearly Study Fund -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="study_fund_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">קרן השתלמות שנתי:</label>
+    <input type="text" id="study_fund_yearly" name="study_fund_yearly" class="form-input" value="{{ form_data.get('study_fund_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.15cm;">
+</div>
+
+<!-- Yearly Disability -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="disability_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">אובדן כושר שנתי:</label>
+    <input type="text" id="disability_yearly" name="disability_yearly" class="form-input" value="{{ form_data.get('disability_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.5cm;">
+</div>
+
+<!-- Yearly Miscellaneous -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="miscellaneous_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">שונות שנתי:</label>
+    <input type="text" id="miscellaneous_yearly" name="miscellaneous_yearly" class="form-input" value="{{ form_data.get('miscellaneous_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.45cm;">
+</div>
+
+<!-- Yearly National Insurance -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="national_insurance_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">ביטוח לאומי שנתי:</label>
+    <input type="text" id="national_insurance_yearly" name="national_insurance_yearly" class="form-input" value="{{ form_data.get('national_insurance_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 0.4cm;">
+</div>
+
+<!-- Yearly Salary Tax -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="salary_tax_yearly" style="font-weight: bold; height: 0.5cm; font-size: 17px;">מס שכר שנתי:</label>
+    <input type="text" id="salary_tax_yearly" name="salary_tax_yearly" class="form-input" value="{{ form_data.get('salary_tax_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.1cm;">
+</div>
+
+<!-- Yearly Total Employer Contributions -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="total_employer_contributions_yearly" style="width: 3.45cm; font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">הפרשות מעביד שנתי:</label>
+    <input type="text" id="total_employer_contributions_yearly" name="total_employer_contributions_yearly" class="form-input" 
+        value="{{ form_data.get('total_employer_contributions_yearly', '0.0') }}" readonly 
+        style="width: 2.9cm; height: 0.5cm; background-color: #F0F0F0; margin-right: 0.0001cm;">
+    </div>
+
+<!-- Yearly Total Salary Cost -->
+<div class="form-row" style="margin-bottom: 10px; white-space: nowrap;">
+    <label for="total_salary_cost_yearly" style="width: 3.45cm; font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">עלות השכר שנתי:</label>
+    <input type="text" id="total_salary_cost_yearly" name="total_salary_cost_yearly" class="form-input" 
+        value="{{ form_data.get('total_salary_cost_yearly', '0.0') }}" readonly 
+        style="width: 2.9cm; height: 0.5cm; background-color: #e6f7ff; margin-right: 0.0001cm;">
+     </div>
+   </div>
+  </div>
+</div>
+
+     <div style="width: 1.3cm;"></div>
+    <!-- Label 2 Section -->
+    <div style="text-align: right; margin-bottom: 15px;">
+
+<!-- Tax Credit Points -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="tax_credit_points" style="width: 3.45cm; font-weight: bold; text-align: right; white-space: nowrap; background-color: #F0F0F0; height: 0.5cm; font-size: 17px;">נקודות זיכוי במס:</label>
+    <input type="text" id="tax_credit_points" name="tax_credit_points" class="form-input" value="{{ form_data.get('tax_credit_points', '0.0') }}" style="font-size: 0.9em; width: 2.9cm; height: 0.5cm; margin-right: 1.25cm;">
+</div>
+
+<!-- Deductions Section Header -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="form-label" style="font-weight: bold; height: 0.5cm; font-size: 17px; background-color: lightyellow;">ניכויים:</label>
+</div>
+
+<!-- Employee Pension Fund -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="employee_pension_fund" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">קופת גמל לשכירים:</label>
+    <input type="text" id="employee_pension_fund" name="employee_pension_fund" class="form-input" value="{{ form_data.get('employee_pension_fund', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.3cm;">
+</div>
+
+<!-- Self-Employed Pension Fund -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="self_employed_pension_fund" style="width: 3.1cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">קופ"ג לעצמאיים (סעיף 47):</label>
+    <input type="text" id="self_employed_pension_fund" name="self_employed_pension_fund" class="form-input" value="{{ form_data.get('self_employed_pension_fund', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.6cm;">
+</div>
+
+<!-- Study Fund Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="study_fund_deductions" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">קרן השתלמות:</label>
+    <input type="text" id="study_fund_deductions" name="study_fund_deductions" class="form-input" value="{{ form_data.get('study_fund_deductions', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.3cm;">
+</div>
+
+<!-- Miscellaneous Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="miscellaneous_deductions" style="width: 3.1cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">ניכויים שונים:</label>
+    <input type="text" id="miscellaneous_deductions" name="miscellaneous_deductions" class="form-input" value="{{ form_data.get('miscellaneous_deductions', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.6cm;">
+</div>
+
+<!-- National Insurance Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="national_insurance_deductions" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">ניכוי ביטוח לאומי:</label>
+    <input type="text" id="national_insurance_deductions" name="national_insurance_deductions" class="form-input" value="{{ form_data.get('national_insurance_deductions', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.3cm;">
+</div>
+
+<!-- Health Insurance Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="health_insurance_deductions" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">ניכוי ביטוח בריאות:</label>
+    <input type="text" id="health_insurance_deductions" name="health_insurance_deductions" class="form-input" value="{{ form_data.get('health_insurance_deductions', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.3cm;">
+</div>
+
+<!-- Income Tax -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="income_tax" style="width: 2.7cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">מס הכנסה:</label>
+    <input type="text" id="income_tax" name="income_tax" class="form-input" value="{{ form_data.get('income_tax', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 2cm;">
+</div>
+
+<!-- Advance Payment -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="advance_payment_salary" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; background-color: lightblue; height: 0.5cm; font-size: 17px;">תשלום מקדמה:</label>
+    <input type="text" id="advance_payment_salary" name="advance_payment_salary" class="form-input" value="{{ form_data.get('advance_payment_salary', '0.0') }}" style="width: 2.9cm; height: 0.5cm; margin-right: 1.3cm;">
+</div>
+
+<!-- Total Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="total_deductions" style="width: 3.25cm; font-weight: bold; text-align: right; white-space: nowrap; background-color: lightyellow; height: 0.5cm; font-size: 17px;">סה"כ ניכויים:</label>
+    <input type="text" id="total_deductions" name="total_deductions" class="form-input" value="{{ form_data.get('total_deductions', '0.0') }}" readonly style="width: 2.9cm; background-color: #e6f7ff; height: 0.5cm; margin-right: 1.45cm;">
+</div>
+
+<!-- Net Payment -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="net_payment" style="width: 3cm; font-weight: bold; text-align: right; white-space: nowrap; background-color: lightyellow; height: 0.5cm; font-size: 17px;">נטו לתשלום:</label>
+    <input type="text" id="net_payment" name="net_payment" class="form-input" value="{{ form_data.get('net_payment', '0.0') }}" readonly style="width: 2.9cm; height: 0.5cm; margin-right: 1.7cm; background-color: lightgreen;">
+    </div>
+
+    <!-- Spacer -->
+    <div style="height: 0.01cm;"></div>
+
+      <div id="yearly3" class="section">
+
+<!-- Yearly Employer Contributions Section Header -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="form-label" style="width: 7.8cm; font-weight: bold; height: 0.5cm; font-size: 19px; background-color: lightgreen; white-space: nowrap;">ניכויי עובד מצטבר שנתי :</label>
+</div>
+
+<!-- Yearly Employee Pension Fund -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="employee_pension_fund_yearly" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">קופת גמל לשכירים שנתי:</label>
+    <input type="text" id="employee_pension_fund_yearly" name="employee_pension_fund_yearly" class="form-input" value="{{ form_data.get('employee_pension_fund_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.3cm;">
+</div>
+
+<!-- Yearly Self-Employed Pension Fund -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="self_employed_pension_fund_yearly" style="width: 3.1cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">קופ"ג לעצמאיים שנתי:</label>
+    <input type="text" id="self_employed_pension_fund_yearly" name="self_employed_pension_fund_yearly" class="form-input" value="{{ form_data.get('self_employed_pension_fund_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.6cm;">
+</div>
+
+<!-- Yearly Study Fund Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="study_fund_deductions_yearly" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">קרן השתלמות שנתי:</label>
+    <input type="text" id="study_fund_deductions_yearly" name="study_fund_deductions_yearly" class="form-input" value="{{ form_data.get('study_fund_deductions_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.3cm;">
+</div>
+
+<!-- Yearly Miscellaneous Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="miscellaneous_deductions_yearly" style="width: 3.1cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">ניכויים שונים שנתי:</label>
+    <input type="text" id="miscellaneous_deductions_yearly" name="miscellaneous_deductions_yearly" class="form-input" value="{{ form_data.get('miscellaneous_deductions_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.6cm;">
+</div>
+
+<!-- Yearly National Insurance Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="national_insurance_deductions_yearly" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">ניכוי ביטוח לאומי שנתי:</label>
+    <input type="text" id="national_insurance_deductions_yearly" name="national_insurance_deductions_yearly" class="form-input" value="{{ form_data.get('national_insurance_deductions_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.3cm;">
+</div>
+
+<!-- Yearly Health Insurance Deductions -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="health_insurance_deductions_yearly" style="width: 3.4cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">ניכוי ביטוח בריאות שנתי:</label>
+    <input type="text" id="health_insurance_deductions_yearly" name="health_insurance_deductions_yearly" class="form-input" value="{{ form_data.get('health_insurance_deductions_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 1.3cm;">
+</div>
+
+<!-- Yearly Income Tax -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="income_tax_yearly" style="width: 2.7cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">מס הכנסה שנתי:</label>
+    <input type="text" id="income_tax_yearly" name="income_tax_yearly" class="form-input" value="{{ form_data.get('income_tax_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 2cm;">
+</div>
+
+<!-- Yearly Amount Tax Credit Points Monthly -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="amount_tax_credit_points_monthly_yearly" style="width: 2.7cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">שווי נקודות זיכוי שנתי:</label>
+        <input type="text" id="amount_tax_credit_points_monthly_yearly" name="amount_tax_credit_points_monthly_yearly" class="form-input" value="{{ form_data.get('amount_tax_credit_points_monthly_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 2cm;">
+</div>
+
+<!-- Yearly Final City Tax Benefit -->
+<div class="form-row" style="margin-bottom: 10px;">
+    <label for="final_city_tax_benefit_yearly" style="width: 2.7cm; font-weight: bold; text-align: right; white-space: nowrap; height: 0.5cm; font-size: 17px;">זיכוי ישוב חודשי שנתי:</label>
+    <input type="text" id="final_city_tax_benefit_yearly" name="final_city_tax_benefit_yearly" class="form-input" value="{{ form_data.get('final_city_tax_benefit_yearly', '0.0') }}" style="width: 2.9cm; height: 0.5cm; background-color: lightyellow; margin-right: 2cm;">
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+    <!-- Add an empty row with small height -->
+    <div style="height: 0.2cm;"></div>
+
+
+<!-- Save Data Button Row -->
+<div style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; flex-wrap: wrap; gap: 8px;">
+
+        <!-- Go to Salary Page Button -->
+            <button type="button" onclick="document.getElementById('employeeDataContainersalarySection').scrollIntoView({behavior: 'smooth'});" style="font-weight: bold; width: 4.25cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                עבור לתלוש משכורת
+        </button>
+        </a>
+
+    <!-- Contact Form -->
+    <a href="{{ url_for('contact_form') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 3.2cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                הוסף איש קשר
+        </button>
+    </a>
+
+    <!-- Employee Data -->
+    <a href="{{ url_for('contact_data') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.8cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+               מידע עובדים
+        </button>
+    </a>
+
+    <!-- Save All inside unified form   -->
+  <button type="button" onclick="saveTable(event)" style="font-weight: bold; width: 2.8cm; height: 0.5cm; font-size: 17px; background-color: #F0FFF0; display: flex; align-items: center; justify-content: center;">
+              עדכן הכל
+       </button>
+</form>
+
+    <!-- Go to Customer Form Page Button -->
+  <button type="button" onclick="toggleYearly()" style="font-weight: bold; width: 2.8cm; height: 0.5cm; font-size: 17px; background-color: lightyellow; display: flex; align-items: center; justify-content: center;">
+                 דו"ח שנתי
+        </button>
+        </a>
+
+    <!-- Go to Report Hours In Out Page Button -->
+  <form action="/clock-in-out" method="GET" style="display:inline;">
+    <input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+    <input type="hidden" name="month" value="{{ selected_month }}">
+    <input type="hidden" name="year" value="{{ selected_year }}">
+
+    <button type="submit"
+            style="font-weight: bold; width: 3.7cm; height: 0.5cm; font-size: 17px;
+                   background-color: #007bff; color: white; display: flex;
+                   align-items: center; justify-content: center;">
+        עבור לדו"ח שעות
+    </button>
+</form>
+
+
+    <!-- Go to Customer Form Form Page Button -->
+    <a href="{{ url_for('customer_form') }}" style="text-decoration: none;">
+      <button type="button" style="font-weight: bold; width: 2.4cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                 הוסף לקוח
+        </button>
+        </a>
+
+    <!-- Go to Customer Data Page Button -->
+    <a href="{{ url_for('customer_data') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.8cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                מידע לקוחות
+        </button>
+    </a>
+
+    <!-- Tax Credit Simulator -->
+    <a href="{{ url_for('tax_credit_simulator') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 3.6cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                חשב נקודות זיכוי
+        </button>
+    </a>
+
+    <!-- View_Invoice -->
+    <a href="{{ url_for('view_invoice') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.1cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                חשבונית 
+        </button>
+    </a>
+
+    <!-- Products Manage -->
+    <a href="{{ url_for('manage_products') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                הוסף מוצר 
+        </button>
+    </a>
+
+    <!-- Bank Manage -->
+        <button type="button" onclick="goToManageBankAccount()" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                חשבון בנק 
+        </button>
+    </a>
+
+    <!-- Print Button Salary -->
+        <button type="button" onclick="window.print()" class="print-button" style="font-weight: bold; width: 4.2cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+           הדפס תלוש משכורת
+        </button>
+    </a>
+
+    <!-- Token Register Button -->
+    <a href="{{ url_for('clients') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.9cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; background-color: lightyellow; justify-content: center;">
+            מידע הרשמה  
+        </button>
+</div>
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.2cm;"></div>
+
+<div style="display: flex; justify-content: flex-start; align-items: center; width: 100%; flex-wrap: wrap; gap: 12px; margin-bottom:10px;">
+
+    <!--Go to Form 102 -->
+    <a href="{{ url_for('form_102') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                טופס 102 
+        </button>
+    </a>
+
+    <!-- Go to Form B102 -->
+    <a href="{{ url_for('form_B102') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.7cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                טופס B102 
+        </button>
+    </a>
+
+    <!-- Go to Form H102 -->
+    <a href="{{ url_for('form_H102') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.7cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                טופס H102 
+        </button>
+    </a>
+
+    <!--Go to Form 106 -->
+    <a href="{{ url_for('form_106') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                טופס 106 
+        </button>
+    </a>
+
+    <!-- Go to Form 161 -->
+    <a href="{{ url_for('form_161') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                טופס 161 
+        </button>
+    </a>
+
+    <!-- Timesheet Manage -->
+    <a href="{{ url_for('timesheet') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 3.5cm; height: 0.5cm; font-size: 17px; background-color: lightyellow; display: flex; align-items: center; justify-content: center;">
+                שעון דיווח שעות 
+        </button>
+    </a>
+
+    <!-- load ClockIn to Index -->
+        <button type="button" onclick="loadClockIntoIndex()" style="font-weight: bold; width: 3.8cm; height: 0.5cm; font-size: 17px; background-color: #F0FFF0; display: flex; align-items: center; justify-content: center;">
+                טען שעות מהשעון 
+        </button>
+    </a>
+
+    <!-- Password All Manage -->
+    <a href="{{ url_for('set_password') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; background-color: lightyellow; display: flex; align-items: center; justify-content: center;">
+                דף סיסמה 
+        </button>
+    </a>
+
+    <!-- Page logout -->
+      <form action="{{ url_for('logout') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-danger" style="font-weight: bold; width: 2.1cm; height: 0.5cm; font-size: 17px; background-color: lightblue; display: flex; align-items: center; justify-content: center;">
+                יציאה
+        </button>
+</form>
+
+    <!-- Clear Data Form -->
+<form method="POST" action="/clear_display">
+        <button type="submit"  style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; background:#f44336; color:white; padding:6px 12px; border: 2px solid black; border-radius:5px; display: flex; align-items: center; justify-content: center;">
+                נקה מידע
+        </button>
+</form>
+</div>
+
+             <!-- Empty row between form To Hidden Salary -->
+             <div style="height: 1.8cm;"></div>
+
+                       <!-- Salary Section -->
+
+  <h2 style="display: none;">תלוש משכורת</h2>
+    <div style="display: flex; gap: 1px;">
+
+ <div id="employeeDataContainersalarySection">
+
+             <!-- Empty row between form To Hidden Salary -->
+             <div style="height: 9.65cm;"></div>
+  
+<table border="1" cellspacing="0" cellpadding="10"
+       style="width:100%; border-collapse:collapse; direction:rtl; font-family:Arial, sans-serif; margin:0 auto;">
+  <colgroup>
+    <col style="width:5%;">   <!-- col 1 -->
+    <col style="width:2%;">   <!-- col 2 -->
+    <col style="width:15%;">   <!-- col 3 -->
+    <col style="width:9%;">  <!-- col 4 -->
+    <col style="width:10%;">  <!-- col 5 -->
+    <col style="width:1%;">   <!-- col 6 -->
+    <col style="width:13%;">   <!-- col 7 -->
+    <col style="width:15%;">   <!-- col 8 -->
+    <col style="width:15%;">  <!-- col 9 -->
+    <col style="width:15%;">  <!-- col 10 -->
+  </colgroup>
+
+    <!-- Top Title/Address -->
+    <tr>
+      <th colspan="10" style="text-align:center; font-size:18px; background-color:#d9edf7;">
+        לרקוד על הגג, הרצל 34, תל אביב, 89654
+      </th>
+    </tr>
+    <!-- Business Info -->
+    <tr>
+      <th colspan="5" style="text-align:right; background-color:#fcf8e3;">עוסק מורשה: 45871587</th>
+      <th colspan="5" style="text-align:right; background-color:#f2dede;">תיק ניכויים: 7896548758</th>
+    </tr>
+    <!-- Salary Slip Title -->
+    </tr>
+      <th colspan="1" style="text-align:right; font-weight:bold; background-color:#dff0d8;">שם העובד:</th>
+      <td colspan="9" style="font-weight: bold; text-align:right; background-color:#dff0d8;" id="selected_employee_name">
+          {{ form_data.employee_name or '' }}
+    </td>
+    <tr>
+      <th colspan="1" style="text-align:right; font-weight:bold; background-color:#f5f5f5;">תלוש שכר לחודש:</th>
+      <td colspan="9" style="font-weight: bold; text-align:right; background-color:#f5f5f5;" id="monthResult">
+          {{ employeeMonth }}/{{ employeeYear }}
+    </td>
+    </tr>
+    <!-- Group Header: Payments and Rates -->
+    <tr>
+      <th colspan="5" style="text-align:center; background:#f0f0f0; color:#0000cc;">תשלומים</th>
+      <th colspan="5" style="text-align:center; background:#f0f0f0; color:#cc0000;">תעריפים</th>
+    </tr>
+
+<tr style="background-color:#e6f7ff;">
+  <th>תאור</th>
+  <th>כמות</th>
+  <th>תעריף</th>
+  <th colspan="2">תשלום</th>
+
+  <td colspan="3" style="background-color:#fff0f5;">תעריף שעה</td>
+  <td class="result-box" colspan="2" style="background-color:#fff0f5;">
+    {{ form_data.get('hourly_rate', "0.0") }}
+  </td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td>משכורת חודשית</td>
+  <td class="result-box" colspan="1">{{ form_data.get('total_missing_hours') or "0.0" }}</td>
+  <td class="result-box"></td>
+  <td class="result-box" colspan="2">{{ form_data.get('basic_salary') or "0.0" }}</td>
+  <td colspan="3" style="background-color:#fff0f5;">תעריף שעה כולל</td>
+  <td class="result-box" colspan="2">{{ form_data.get('hourly_rate', '0.0') }}</td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="contract-only">שעות נוספות</span></td>
+  <td class="result-box contract-only" colspan="1">
+    <span class="contract-only">
+      {{ form_data.get('final_extra_hours_regular', '0.0') }}
+    </span>
+  </td>
+  <td class="result-box contract-only"></td>
+  <td class="result-box contract-only" colspan="2">
+    <span id="extra_regular_hours_pay" class="contract-only"></span>
+  </td>
+
+  <td colspan="5" style="background-color:#ffffe0;">נתונים אישיים</td>
+</tr>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    function clean(v) {
+      return parseFloat(String(v).replace(/[₪,]/g, '').trim()) || 0;
+    }
+
+    const extraHoursRegular125 = clean("{{ form_data.get('hours125_regular_salary', '0') }}");
+    const extraHoursRegular150 = clean("{{ form_data.get('hours150_regular_salary', '0') }}");
+    const foodBreakUnpaid = clean("{{ form_data.get('food_break_unpaid_salary', '0') }}");
+
+    const extraPay = extraHoursRegular125 + extraHoursRegular150 - foodBreakUnpaid;
+
+    const el = document.getElementById("extra_regular_hours_pay");
+    if (el) {
+      el.textContent = extraPay.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+  });
+</script>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="contract-only">שעות נוספות שבת וחג</span></td>
+  <td class="result-box contract-only" colspan="1">
+    <span class="contract-only">
+      {{ form_data.get('final_extra_hours_weekend', '0.0') }}
+    </span>
+  </td>
+  <td class="result-box contract-only"></td>
+  <td class="result-box contract-only" colspan="2">
+    <span id="extra_weekend_hours_pay" class="contract-only"></span>
+  </td>
+
+  <td colspan="3">מספר זהות</td>
+  <td class="result-box" colspan="2">{{ form_data.get('id_number', '0.0') }}</td>
+</tr>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    function clean(v) {
+      return parseFloat(String(v).replace(/[₪,]/g, '').trim()) || 0;
+    }
+
+    const extraHoursWeekend150 = clean("{{ form_data.get('hours150_holidays_saturday_salary', '0') }}");
+    const extraHoursWeekend175 = clean("{{ form_data.get('hours175_holidays_saturday_salary', '0') }}");
+    const extraHoursWeekend200 = clean("{{ form_data.get('hours200_holidays_saturday_salary', '0') }}");
+
+    const extraPay = extraHoursWeekend150 + extraHoursWeekend175 + extraHoursWeekend200;
+
+    const el = document.getElementById("extra_weekend_hours_pay");
+    if (el) {
+      el.textContent = extraPay.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+  });
+</script>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="personal-only">משכורת יג</span></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only" colspan="2">
+    <span class="personal-only">{{ form_data.get('thirteenth_salary', '0.0') }}</span>
+  </td>
+  <td colspan="3">מצב משפחתי</td>
+  <td class="result-box" colspan="2">{{ form_data.get('marital_status', '0.0') }}</td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="above-ceiling-only">זקיפות שכר</span></td>
+  <td class="result-box above-ceiling-only"></td>
+  <td class="result-box above-ceiling-only"></td>
+  <td class="result-box above-ceiling-only" colspan="2">
+    <span class="above-ceiling-only" id="above_ceiling_fund_display"
+          data-raw-value="{{ form_data.get('above_ceiling_fund', '0.0') }}">
+      {{ form_data.get('above_ceiling_fund', '0.0') }}
+    </span>
+  </td>
+
+  <td colspan="3">קופת חולים</td>
+  <td class="result-box" colspan="2">{{ form_data.get('hospital', '0.0') }}</td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="personal-only">שווי ארוחת צהריים</span></td>
+  <td class="result-box personal-only" colspan="1">
+    <span class="personal-only">
+      {{ form_data.get('total_work_days', '0.0') }}
+    </span>
+  </td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only" colspan="2">
+    <span class="personal-only">{{ form_data.get('totals_lunch_value', '0.0') }}</span>
+  </td>
+
+  <td colspan="3">ביטוח לאומי</td>
+  <td class="result-box" colspan="2">{{ form_data.get('social_number', '0.0') }}</td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="personal-only">שווי טלפון נייד</span></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only" colspan="2">
+    <span class="personal-only">{{ form_data.get('mobile_value', '0.0') }}</span>
+  </td>
+  <td colspan="3">מס הכנסה</td>
+  <td class="result-box" colspan="2">{{ form_data.get('irs_status', '0.0') }}</td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="personal-only">שווי ביגוד</span></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only" colspan="2">
+    <span class="personal-only">{{ form_data.get('clothing_value', '0.0') }}</span>
+  </td>
+
+  <td colspan="3">התחלת עבודה</td>
+  <td class="result-box" colspan="2">{{ form_data.get('start_date', '0.0') }}</td>
+</tr>
+
+<tr style="background-color:#fff0f5;">
+  <td><span class="personal-only">שווי רכב</span></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only"></td>
+  <td class="result-box personal-only" colspan="2">
+    <span class="personal-only">{{ form_data.get('cars_value', '0.0') }}</span>
+  </td>
+
+  <td colspan="3">אחוז משרה</td>
+  <td class="result-box" colspan="2">{{ form_data.get('work_percent', '0.0') }}</td>
+</tr>
+
+    <tr style="background-color:#fff0f5;">
+        <td></td>
+        <td class="result-box"></td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('', '') }}</td>
+
+        <td colspan="3">סוג חוזה</td>
+      <td class="result-box" colspan="2">{{ form_data.get('contract_status', '0.0') }}</td>
+      </tr>
+    <tr style="background-color:#fff0f5;">
+        <td></td>
+        <td class="result-box"></td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('', '') }}</td>
+
+        <td colspan="3">ימי עבודה מדווחים</td>
+      <td class="result-box" colspan="2">{{ form_data.get('total_work_days', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+        <td></td>
+        <td class="result-box"></td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('', '') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">שע' עבודה מדווחים</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('total_missing_hours', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+        <td></td>
+        <td class="result-box"></td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('', '') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">נקודות זכוי</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('tax_credit_points', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#e6f7ff;">
+        <td colspan="3">סה"כ תשלומים</td>
+      <td class="result-box" colspan="2">{{ form_data.get('gross_taxable', '0.0') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">מס שולי</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('tax_level_precente', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#ffffe0;">
+        <td colspan="5">ניכויי חובה</td>
+
+   <td colspan="5" style="background-color:#ffffe0;">העדרויות</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">מס הכנסה</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('income_tax', '0.0') }}</td>
+
+  <td style="background-color:#e6f7ff; color:#004085; font-weight:bold;">העדרויות</td>
+  <td style="background-color:#e6f7ff; color:#004085; font-weight:bold;">י' קודמת</td>
+  <td style="background-color:#e6f7ff; color:#004085; font-weight:bold;">זכאות</td>
+  <td colspan="2" style="background-color:#e6f7ff; color:#004085; font-weight:bold;">ניצול יתרה</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">ביטוח לאומי</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('national_insurance_deductions', '0.0') }}</td>
+
+        <td>חופשה</td>
+      <td class="result-box" colspan="1">{{ form_data.get('vacation_days_salary_yearly', '0.0') }}</td>
+         <td class="result-box" colspan="1">{{ form_data.get('vacation_days_entitlement', '0.0') }}</td>
+      <td class="result-box" colspan="2">{{ form_data.get('vacation_balance_yearly', '0.0') }}</td>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">ביטוח בריאות</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('health_insurance_deductions', '0.0') }}</td>
+
+   <td style="background-color:#fff0f5;">מחלה</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="1">{{ form_data.get('sick_days_salary_yearly', '0.0') }}</td>
+         <td class="result-box" colspan="1">{{ form_data.get('sick_days_entitlement', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('sick_days_balance_yearly', '0.0') }}</td>
+      </tr>
+
+  <td  colspan="3" style="background-color:#e6f7ff;">סה"כ ניכויי חובה</td>
+  <td class="result-box" style="background-color:#e6f7ff;" colspan="2" id="total_employee_deductions"></td>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    function clean(v) {
+      return parseFloat(String(v).replace(/[₪,]/g, '').trim()) || 0;
+    }
+
+    const incomeTax   = clean("{{ form_data.get('income_tax', '0') }}");
+    const nationalIns = clean("{{ form_data.get('national_insurance_deductions', '0') }}");
+    const healthIns   = clean("{{ form_data.get('health_insurance_deductions', '0') }}");
+
+    const total = incomeTax + nationalIns + healthIns;
+
+    const el = document.getElementById("total_employee_deductions");
+    if (el) {
+      el.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  });
+</script>
+
+   <td colspan="5" style="background-color:#ffffe0;">חישובי מס</td>
+
+    <tr style="background-color:#ffffe0;">
+        <td colspan="5">ניכויים נוספים</td>
+
+   <td colspan="2" style="background-color:#e6f7ff;">תאור</td>
+   <td colspan="1" style="background-color:#e6f7ff;">סכום</td>
+   <td colspan="2" style="background-color:#e6f7ff;">מצטבר שנתי</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">הפרשה לגמל</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('employee_pension_fund', '0.0') }}</td>
+        <td colspan="2">סכום חייב במס</td>
+      <td class="result-box" colspan="1">{{ form_data.get('gross_taxable', '0.0') }}</td>
+      <td class="result-box" colspan="2">{{ form_data.get('gross_taxable_yearly', '0.0') }}</td>
+      </tr>
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">קופ"ג לעצמאיים</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('self_employed_pension_fund', '0.0') }}</td>
+        <td colspan="3">סכום המס לתשלום</td>
+      <td class="result-box" colspan="2">{{ form_data.get('income_tax_yearly', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">קרן השתלמות</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('study_fund_deductions', '0.0') }}</td>
+      <td colspan="2" style="background-color:#fff0f5;">שווי נקודות זכוי</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('amount_tax_credit_points_monthly', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('amount_tax_credit_points_monthly_yearly', '0.0') }}</td>
+      </tr>
+
+  <td  colspan="3" style="background-color:#e6f7ff;">סה"כ כללי</td>
+  <td class="result-box" style="background-color:#e6f7ff;" colspan="2" id="total_funds"></td>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    function clean(v) {
+      return parseFloat(String(v).replace(/[₪,]/g, '').trim()) || 0;
+    }
+
+    const employee = clean("{{ form_data.get('employee_pension_fund', 0) }}");
+    const selfEmp  = clean("{{ form_data.get('self_employed_pension_fund', 0) }}");
+    const study    = clean("{{ form_data.get('study_fund_deductions', 0) }}");
+
+    const total = employee + selfEmp + study;
+
+    const el = document.getElementById("total_funds");
+    if (el) {
+      el.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  });
+</script>
+
+      <td colspan="2" style="background-color:#fff0f5;">זכוי הנחת ישוב</td>
+        <td class="result-box"style="background-color:#fff0f5;"></td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('final_city_tax_benefit', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#ffffe0;">
+        <td colspan="5">הפרשות מעביד</td>
+
+   <td colspan="2" style="background-color:#fff0f5;">זכוי מס (45)</td>
+        <td class="result-box"style="background-color:#fff0f5;"></td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('hourly_rate', '0.0') }}</td>
+      </tr>
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">הפרשה לגמל מעביד</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('pension_fund', '0.0') }}</td>
+
+   <td colspan="2" style="background-color:#fff0f5;">ניכוי מס (47)</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('hourly_rate', '0.0') }}</td>
+      </tr>
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">הפרשה לפיצויים</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('compensation', '0.0') }}</td>
+      <td colspan="2" style="background-color:#fff0f5;">סכום חייב ב&quot;ל</td>
+      <td class="result-box" colspan="1">{{ form_data.get('gross_taxable', '0.0') }}</td>
+      <td class="result-box" colspan="2">{{ form_data.get('gross_taxable_yearly', '0.0') }}</td>
+      </tr>
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">קרן השתלמות מעביד</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('study_fund', '0.0') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">ביטוח לאומי עובד</td>
+      <td class="result-box" colspan="2">{{ form_data.get('national_insurance_deductions_yearly', '0.0') }}</td>
+      </tr>
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">אובדן כושר</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('disability', '0.0') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">ביטוח בריאות עובד</td>
+      <td class="result-box" colspan="2">{{ form_data.get('health_insurance_deductions_yearly', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">שונות</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('miscellaneous', '0.0') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">אובדן כושר מעביד</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('disability_yearly', '0.0') }}</td>
+      </tr>
+
+    <tr style="background-color:#fff0f5;">
+  <td colspan="2">ב&quot;ל - מעביד</td>
+        <td class="result-box"></td>
+      <td class="result-box" colspan="2">{{ form_data.get('national_insurance', '0.0') }}</td>
+
+   <td colspan="3" style="background-color:#fff0f5;">ביטוח לאומי מעביד</td>
+      <td class="result-box" style="background-color:#fff0f5;" colspan="2">{{ form_data.get('national_insurance_yearly', '0.0') }}</td>
+      </tr>
+
+   <td  colspan="3" style="background-color:#e6f7ff;">סה"כ עלות מעביד</td>
+      <td class="result-box" style="background-color:#e6f7ff;"
+ colspan="2">{{ form_data.get('total_employer_contributions', '0.0') }}</td>
+
+   <td colspan="5" style="background-color:#ffffe0;">הפקדות מצטברות בקרנות</td>
+      </tr>
+
+   <td  colspan="3" style="background-color:#ffffe0;">סה"כ תשלום מקדמה</td>
+      <td class="result-box" style="background-color:#ffffe0; color:#ff4d4d;"
+ colspan="2">{{ form_data.get('advance_payment_salary', '0.0') }}</td>
+
+   <td colspan="2" style="background-color:#e6f7ff;">קופה/קרן</td>
+   <td style="background-color:#e6f7ff;">עובד</td>
+   <td style="background-color:#e6f7ff;">מעביד</td>
+   <td style="background-color:#e6f7ff;">פיצויים</td>
+      </tr>
+
+  <td style="background-color:lightgreen;" colspan="2">סכום בבנק</td> 
+  <td class="result-box" style="background-color:lightgreen;" colspan="3">
+    ₪{{ form_data.get('net_payment', '0.0') }}
+    </td>
+
+   <td colspan="2" style="background-color:#fff0f5;">הפרשה לגמל</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('employee_pension_fund_yearly', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('pension_fund_yearly', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('compensation_yearly', '0.0') }}</td>
+      </tr>
+
+<td style="background-color:#ffffe0;">פרטי חשבון הבנק</td>
+<td class="result-box" style="background-color:#ffffe0;" colspan="4">
+  בנק {{ form_data.get('bank_number', '') }},
+  סניף {{ form_data.get('branch_number', '') }}
+</td>
+
+   <td colspan="2" style="background-color:#fff0f5;">הראל קופ&quot;ג</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('self_employed_pension_fund_yearly', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('', '') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('', '') }}</td>
+      </tr>
+
+   <td style="background-color:#ffffe0;">מספר חשבון</td>
+      <td class="result-box" style="background-color:#ffffe0;" colspan="4">{{ form_data.get('account_number', '0.0') }}</td>
+
+   <td colspan="2" style="background-color:#fff0f5;">קה&quot;ל מגדל</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('study_fund_deductions_yearly', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('study_fund_yearly', '0.0') }}</td>
+      <td class="result-box" style="background-color:#fff0f5;">{{ form_data.get('', '') }}</td>
+
+      </tr>
+        </tr>
+    </tbody>
+  </table>
+
+    <!-- Back to Top Home Button  -->
+<button onclick="scrollToTop()" id="backToTopBtn">חזור לדף הבית</button>
+
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Keyboard navigation inside dynamic table
+    const tableBody = document.getElementById('table-body');
+    if (tableBody) {
+        tableBody.addEventListener('keydown', function (event) {
+            const key = event.key;
+            const currentInput = event.target;
+
+            if (currentInput.tagName === 'INPUT') {
+                const currentRow = currentInput.closest('tr');
+                const allRows = Array.from(tableBody.querySelectorAll('tr'));
+                const rowIndex = allRows.indexOf(currentRow);
+                const allInputsInRow = Array.from(currentRow.querySelectorAll('input'));
+                const colIndex = allInputsInRow.indexOf(currentInput);
+
+                switch (key) {
+                    case 'ArrowUp':
+                        if (rowIndex > 0) {
+                            const inputAbove = allRows[rowIndex - 1].querySelectorAll('input')[colIndex];
+                            if (inputAbove) inputAbove.focus();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'ArrowDown':
+                        if (rowIndex < allRows.length - 1) {
+                            const inputBelow = allRows[rowIndex + 1].querySelectorAll('input')[colIndex];
+                            if (inputBelow) inputBelow.focus();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'ArrowLeft':
+                        if (colIndex < allInputsInRow.length - 1) {
+                            allInputsInRow[colIndex + 1].focus();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'ArrowRight':
+                        if (colIndex > 0) {
+                            allInputsInRow[colIndex - 1].focus();
+                        }
+                        event.preventDefault();
+                        break;
+                }
+            }
+        });
+    }
+});
+</script>
+
+<script>
+// === Hide Or Show All Yearly Sections Report Display ===
+function toggleYearly() {
+    const sections = document.querySelectorAll('.section');
+
+    // Read current state
+    const isOpen = sessionStorage.getItem("yearly_open") === "true";
+
+    // Toggle state
+    const newState = !isOpen;
+
+    // Apply new state
+    sections.forEach(sec => {
+        sec.style.display = newState ? "block" : "none";
+    });
+
+    // Save state
+    sessionStorage.setItem("yearly_open", newState);
+}
+
+// === Restore state on page load ===
+document.addEventListener("DOMContentLoaded", () => {
+    const sections = document.querySelectorAll('.section');
+    const isOpen = sessionStorage.getItem("yearly_open") === "true";
+
+    sections.forEach(sec => {
+        sec.style.display = isOpen ? "block" : "none";
+    });
+});
+</script>
+
+<script>
+  // Show button when scrolled down 200px
+  window.onscroll = function() {
+    const btn = document.getElementById("backToTopBtn");
+    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+      btn.style.display = "block";
+    } else {
+      btn.style.display = "none";
+    }
+  };
+
+  // Smooth scroll to top
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+<script>
+    function goToManageBankAccount() {
+        // Get the selected employee ID from the dropdown list
+        var employeeId = document.getElementById('employee_id').value;
+
+        if (employeeId) {
+            // Use Flask's url_for via Jinja to generate the base URL pattern once
+            // and then substitute the ID dynamically in JS.
+            var url_pattern = "{{ url_for('manage_bank_account', employee_id=0) }}";
+            var final_url = url_pattern.replace('/0/bank', '/' + employeeId + '/bank');
+            
+            // Redirect the user to the correct page
+            window.location.href = final_url;
+        } else {
+            alert("אנא בחר עובד תחילה.");
+        }
+    }
+</script>
+
+<script>
+  const all_hours = {{ all_hours|safe }};
+</script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

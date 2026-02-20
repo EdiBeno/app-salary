@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>דו"ח שעות</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='Clockstyles.css') }}">
+  <!-- Load user role from session -->
+<script>
+    const userRole = "{{ session.get('role', '') }}".trim();
+    const employeeId = "{{ session.get('employee_id', '') }}".trim();
+    const employeeName = "{{ session.get('employee_name', '') }}".trim();
+</script>
+
+  <script src="{{ url_for('static', filename='hourscard.js') }}"></script>
+</head>
+
+<form method="GET" action="/clock-in-out" id="reloadForm">
+
+<h2 class="title">דו"ח שעות עבודה</h2>
+
+    <!-- Employee Name Dropdown -->
+
+    <label for="employee_id" style="width: 2.2cm; font-weight: bold; text-right: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">שם העובד :</label>
+    <select id="employee_id" name="employee_id"
+        onchange="document.getElementById('reloadForm').submit();"
+        style="width: 3.9cm; font-weight: bold; font-size: 15px; background-color: lightyellow; text-align: center; white-space: nowrap;border: 1px solid black; outline: 1px solid black; height: 0.53cm;">
+        <option value="">בחר עובד</option>
+        {% for employee in employees %}
+           <option value="{{ employee.id }}"
+               {% if employee.id|string == selected_employee_id %}selected{% endif %}>
+            {{ employee.employee_name }}
+        </option>
+        {% endfor %}
+    </select>
+
+<!-- ID Number -->
+  <label for="id_number" style="width: 2cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">מספר זהות:</label>
+  <input type="text" id="id_number" name="id_number"
+         value="{{ form_data.get('id_number', '') }}"
+         style="width: 2.5cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.4cm; font-size: 16px;">
+</div>
+
+  <!-- Month Selector -->
+<label for="employeeMonth" style="width: 1.8cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">בחירת חודש :</label>
+<select id="employeeMonth" name="month" onchange="document.getElementById('reloadForm').submit();" style="width: 2cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.55cm; font-size: 15px;">
+      {% for i in range(1,13) %}
+          {% set val = "%02d"|format(i) %}
+          <option value="{{ val }}" {% if employeeMonth == val %}selected{% endif %}>{{ months[i-1] }}</option>
+      {% endfor %}
+  </select>
+
+  <!-- Year Selector -->
+<label for="employeeYear" style="width: 1.8cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.5cm; font-size: 17px;">בחירת שנה :</label>
+<select id="employeeYear" name="year" onchange="document.getElementById('reloadForm').submit();" style="width: 1.8cm; font-weight: bold; text-align: center; white-space: nowrap; height: 0.55cm; font-size: 15px;">
+      {% for year in years %}
+          <option value="{{ year }}" {% if employeeYear  == year|string %}selected{% endif %}>{{ year }}</option>
+      {% endfor %}
+  </select>
+
+<form method="POST" onsubmit="saveClockMonthsHours(event)">
+
+  <!-- Include selected values again for saving -->
+  <input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+  <input type="hidden" name="employeeMonth" value="{{ employeeMonth }}">
+  <input type="hidden" name="employeeYear" value="{{ employeeYear }}">
+
+<table border="1" style="border-collapse:collapse; margin-top:10px;">
+  <table id="hours-table-clock">
+<thead>
+    <tr style="background-color:lightblue; height:0.5cm;">
+      <th style="width:2.5cm; height:0.5cm; text-align:center; font-weight:bold;">יום</th>
+      <th style="width:2.5cm; height:0.5cm; text-align:center; font-weight:bold;">תאריך</th>
+      <th style="width:2.5cm; height:0.5cm; text-align:center; font-weight:bold;">שבת</th>
+      <th style="width:2.5cm; height:0.5cm; text-align:center; font-weight:bold;">חג</th>
+      <th style="width:2.5cm; height:0.5cm; text-align:center; font-weight:bold;">שעת התחלה</th>
+      <th style="width:2.5cm; height:0.5cm; text-align:center; font-weight:bold;">שעת סיום</th>
+      <th style="width:4cm; text-align:center; font-weight:bold;">משימה</th>
+      <th style="width:2.5cm; text-align:center; font-weight:bold;">סה״כ שעות</th>
+
+      {% if role == 'owner' %}
+      <th style="width:0.9cm; text-align:center; font-weight:bold; background-color:#ffe680;">
+          נקה יום
+      </th>
+      {% endif %}
+    </tr>
+</thead>
+<tbody id="table-body">
+      <!-- JS will create ALL days rows here -->
+</tbody>
+</table>
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.1cm;"></div>
+
+    <!-- Button Section -->
+
+  <div style="display: flex; gap: 6px; margin-top: 1px; align-items: center; flex-wrap: wrap;">
+
+    <!-- Go to Main Page Button -->
+    {% if role == 'owner' %}
+    <a href="{{ url_for('index') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+            עבור לדף הראשי
+        </button>
+    </a>
+    {% endif %} 
+
+    <!-- Print Button Salary -->
+        <button type="button" onclick="window.print()" class="print-button" style="font-weight: bold; width: 4.3cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+           🖨️הדפס דו"ח שעות
+       </button>
+
+    <!-- Save All inside unified form   -->
+<form onsubmit="return false;">
+  <button type="button" onclick="saveClockMonthsHours(event)" style="font-weight: bold; width: 3.1cm; height: 0.5cm; font-size: 17px; background-color: lightyellow; display: flex; align-items: center; justify-content: center;">
+              שמור שעות
+       </button>
+</form>
+
+    <!-- Clear Data Form -->
+{% if session.get('user_role') == 'owner' %}
+      <form method="POST" action="/clear_clock_display">
+        <button type="submit" style="font-weight: bold; width: 2.5cm; height: 0.5cm; font-size: 17px; background:#f44336; color:white; padding:6px 12px; border: 2px solid black; border-radius:5px; display: flex; align-items: center; justify-content: center;">
+                נקה מידע
+        </button>
+</form>
+{% endif %}
+
+    <!-- Delete Data File -->
+{% if session.get('user_role') == 'owner' %}
+      <form method="POST" action="/delete_clock_file">
+        <button type="submit" style="font-weight: bold; width: 2.7cm; height: 0.5cm; font-size: 17px; background:#f44336; color:white; padding:6px 12px; border: 2px solid black; border-radius:5px; display: flex; align-items: center; justify-content: center;">
+                מחק קובץ
+        </button>
+</form>
+{% endif %}
+
+    <!-- Timesheet Manage -->
+    <a href="{{ url_for('timesheet') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 3.4cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+                שעון דיווח שעות 
+        </button>
+    </a>
+
+    <!-- Page logout -->
+{% if role == 'employee' %}
+      <form action="{{ url_for('logout') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-danger" style="font-weight: bold; width: 2.1cm; height: 0.5cm; font-size: 17px; background-color: lightblue; display: flex; align-items: center; justify-content: center;">
+                יציאה
+        </button>
+</form>
+{% endif %} 
+
+<!-- ====== SCRIPT: LOAD DATA FROM SERVER FIRST ====== -->
+
+<script>
+  // Saved hours for the selected employee+month
+  const hoursTableClock = {{ hours_table_clock | tojson }};
+</script>
+
+<script>
+// Function to format the input time
+function formatTime(input) {
+  let value = input.value.replace(/\D/g, ''); // Remove non-digit characters
+
+  let hours, minutes;
+
+  if (value.length === 3) {
+    // Example: 234 → 2:34
+    hours = parseInt(value.slice(0, 1), 10);
+    minutes = parseInt(value.slice(1), 10);
+  } else if (value.length === 4) {
+    // Example: 1600 → 16:00
+    hours = parseInt(value.slice(0, 2), 10);
+    minutes = parseInt(value.slice(2), 10);
+  } else {
+    input.value = value; // Let user keep typing
+    return;
+  }
+
+  // Only format if valid time
+  if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+    input.value = hours + ':' + minutes.toString().padStart(2, '0');
+  } else {
+    input.value = value; // Keep raw input if not valid yet
+  }
+}
+
+function enforceMaxLength(input) {
+  if (input.value.length > 5) {
+    input.value = input.value.slice(0, 5); // cut off anything beyond 5 chars
+  }
+}
+
+
+const hebrewDays = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+// Helpers
+function isSaturday(dateStr) {
+  const [day, month, year] = dateStr.split('/');
+  const dateObj = new Date(year, month - 1, day);
+  return dateObj.getDay() === 6;
+}
+
+// Function to check if the date is a holiday.
+function isHoliday(date) {
+    const holidays = [
+        '27/03/2021', '28/03/2021', '15/04/2021', '17/05/2021', '06/09/2021', '07/09/2021', '16/09/2021', '20/09/2021', '21/09/2021',
+        '18/03/2022', '15/04/2022', '05/05/2022', '05/06/2022', '25/09/2022', '26/09/2022', '05/10/2022', '09/10/2022', '10/10/2022',
+        '05/04/2023', '06/04/2023', '26/04/2023', '26/04/2023', '15/09/2023', '16/09/2023', '25/09/2023', '29/09/2023', '30/09/2023',
+        '22/04/2024', '23/04/2024', '14/05/2024', '12/06/2024', '02/10/2024', '03/10/2024', '12/10/2024', '16/10/2024', '17/10/2024',
+        '12/04/2025', '13/04/2025', '01/05/2025', '02/06/2025', '22/09/2025', '23/09/2025', '02/10/2025', '06/10/2025', '07/10/2025',
+        '05/03/2026', '01/04/2026', '22/04/2026', '22/05/2026', '11/09/2026', '12/09/2026', '21/09/2026', '25/09/2026', '26/09/2026',
+        '21/04/2027', '22/04/2027', '12/05/2027', '11/06/2027', '01/10/2027', '02/10/2027', '11/10/2027', '15/10/2027', '16/10/2027',
+        '10/04/2028', '11/04/2028', '02/05/2028', '31/05/2028', '20/09/2028', '21/09/2028', '30/09/2028', '04/10/2028', '05/10/2028'
+    ];
+
+    // Ensure the date format is consistent
+    const formattedDate = date.split('/').map(part => part.padStart(2, '0')).join('/');
+    return holidays.includes(formattedDate);
+}
+
+
+
+// Update Days
+async function updateDays() { 
+    const monthSelect = document.getElementById("employeeMonth");
+    const yearSelect  = document.getElementById("employeeYear");
+
+    if (monthSelect && yearSelect) {
+        if (!monthSelect.value) {
+            const now = new Date();
+            monthSelect.value = String(now.getMonth() + 1).padStart(2, "0");
+        }
+        if (!yearSelect.value) {
+            const now = new Date();
+            yearSelect.value = String(now.getFullYear());
+        }
+    }
+
+    const month = monthSelect.value.padStart(2, '0');
+    const year = yearSelect.value;
+
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const savedDataMap = {};
+
+    if (hoursTableClock && Array.isArray(hoursTableClock.work_day_entries)) {
+        hoursTableClock.work_day_entries.forEach(item => {
+            // ננרמל את התאריך למפתח בפורמט YYYY-MM-DD
+            let key = "";
+
+            if (item.api_date) {
+                // אם כבר יש api_date מוכן
+                key = item.api_date;
+            } else if (item.date) {
+                // אם התאריך בפורמט DD/MM/YYYY → נהפוך ל־YYYY-MM-DD
+                const m = item.date.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                if (m) {
+                    key = `${m[3]}-${m[2]}-${m[1]}`;
+                } else {
+                    // אם כבר בפורמט YYYY-MM-DD
+                    key = item.date;
+                }
+            }
+
+            savedDataMap[key] = {
+                start_time: item.start_time || '',
+                end_time: item.end_time || '',
+                task: item.task || '',
+                totalHours: item.totalHours || ''
+            };
+        });
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month - 1, day);
+        const dayName = hebrewDays[dateObj.getDay()];
+
+        const dayStr = String(day).padStart(2, '0');
+        const formattedDate = `${dayStr}/${month}/${year}`;
+        const apiDateKey = `${year}-${month}-${dayStr}`;
+
+        const isSaturdayResult = isSaturday(formattedDate);
+        const isHolidayResult = isHoliday(formattedDate); 
+
+        const dailyHours = savedDataMap[apiDateKey] || { 
+            start_time: '', 
+            end_time: '', 
+            task: '', 
+            totalHours: '' 
+        };
+
+        const row = document.createElement('tr');
+        row.classList.add('small-row', 'row-height');
+        row.style.height = '0.5cm';
+
+        row.innerHTML = `
+          <td style="width:2.5cm; text-align:center; font-weight:bold;">${dayName}</td>
+          <td style="width:2.5cm; text-align:center; font-weight:bold;">${formattedDate}</td>
+          <td style="width:2.0cm; text-align:center; font-weight:bold;">${isSaturdayResult ? 'שבת' : ''}</td>
+          <td style="width:2.0cm; text-align:center; font-weight:bold;">${isHolidayResult ? 'חג' : ''}</td>
+
+          <td style="width:2.5cm; text-align:center; font-weight:bold;">
+            <input type="text" class="start-time"
+                   maxlength="5"
+                   style="width:2.5cm; text-align:center; font-weight:bold;"
+                   oninput="enforceMaxLength(this); formatTime(this)"
+                   value="${dailyHours.start_time}">
+          </td>
+
+          <td style="width:2.5cm; text-align:center; font-weight:bold;">
+            <input type="text" class="end-time"
+                   maxlength="5"
+                   style="width:2.5cm; text-align:center; font-weight:bold;"
+                   oninput="enforceMaxLength(this); formatTime(this)"
+                   value="${dailyHours.end_time}">
+          </td>
+
+          <td style="width:6cm; text-align:center; font-weight:bold;">
+            <input type="text" class="task-input"
+                   style="width:6cm; text-align:center; font-weight:bold;"
+                   value="${dailyHours.task}">
+          </td>
+
+          <td style="width:2.5cm; text-align:center; font-weight:bold;">
+            <input type="text" class="totalHours-input"
+                   style="width:2.5cm; text-align:center; font-weight:bold;"
+                   value="${dailyHours.totalHours}">
+          </td>
+        `;
+
+        if (userRole === "owner") {
+            const clearCell = document.createElement("td");
+            clearCell.style.width = "0.9cm";
+            clearCell.style.height = "0.3cm";
+            clearCell.style.textAlign = "center";
+            clearCell.style.fontWeight = "bold";
+            clearCell.style.fontSize = "15px";
+
+            const btnColor = (day % 2 === 1) ? "#e6e6e6" : "#ffe680";
+            const btnBorder = (day % 2 === 1) ? "#bfbfbf" : "#d4b300";
+
+            clearCell.innerHTML = `
+              <button class="clear-day-btn"
+                      data-date="${apiDateKey}"
+                      style="font-size:14px; padding:2px 4px;
+                             background-color:${btnColor};
+                             border:1px solid ${btnBorder};
+                             border-radius:3px; cursor:pointer;">
+                      נקה
+              </button>
+            `;
+            row.appendChild(clearCell);
+        }
+
+        if (isHolidayResult) {
+            row.style.backgroundColor = 'lightgreen';
+        } else if (isSaturdayResult) {
+            row.style.backgroundColor = 'lightblue';
+        } else {
+            row.style.backgroundColor = (day % 2 === 1) ? 'lightyellow' : '#f2f2f2';
+        }
+
+        tbody.appendChild(row);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateDays();
+
+    const monthSelect = document.getElementById('employeeMonth');
+    const yearSelect  = document.getElementById('employeeYear');
+
+    if (monthSelect) monthSelect.addEventListener('change', updateDays);
+    if (yearSelect)  yearSelect.addEventListener('change', updateDays);
+});
+
+// === CLEAR-DAY HANDLER (NOT DELETE) ===
+document.addEventListener("click", async (e) => {
+    if (!e.target.classList.contains("clear-day-btn")) return;
+
+    const date = e.target.dataset.date;
+
+    if (!confirm("לנקות את הדיווח ליום: " + date + "?")) return;
+
+    try {
+        const res = await fetch("/api/clear_day", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        await loadHoursTable();  // should refresh hoursTableClock
+        updateDays();
+
+    } catch (err) {
+    }
+});
+
+
+
+// === APPLY DAILY PUNCH TO MONTHLY TABLE ===
+function applyDailyToMonthlyTable(dateISO, start, end, task, total) {
+    const [year, month, day] = dateISO.split("-");
+    const formattedDate = `${day}/${month}/${year}`;
+
+    const rows = document.querySelectorAll("#table-body tr");
+
+    rows.forEach(row => {
+        const dateCell = row.children[1].textContent.trim();
+        if (dateCell === formattedDate) {
+            row.querySelector(".start-time").value = start;
+            row.querySelector(".end-time").value = end;
+            row.querySelector(".task-input").value = task;
+            row.querySelector(".totalHours-input").value = total;
+        }
+    });
+}
+
+                       // Load And Save Table Data Columns on Page 
+
+// === Daily and Monthly Field Definitions ===
+const dailyFields = [
+  'day', 'date', 'saturday', 'holiday', 'start_time', 'end_time', 'task', 'totalHours',
+];
+
+// === Collect Table Data for Saving ===
+function collectclockHoursTable() {
+  const rows = Array.from(document.querySelectorAll("#table-body tr"));
+  const work_day_entries = [];
+
+  rows.forEach(row => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 9) return;
+
+    const rowData = {};
+
+    const dayName  = cells[0].textContent.trim();
+    const dateDisp = cells[1].textContent.trim();
+    const saturday = cells[2].textContent.trim();
+    const holiday  = cells[3].textContent.trim();
+
+    const startVal = cells[4].querySelector("input")?.value.trim() || "";
+    const endVal   = cells[5].querySelector("input")?.value.trim() || "";
+    const taskVal  = cells[6].querySelector("input")?.value.trim() || "";
+    const totalVal = cells[7].querySelector("input")?.value.trim() || "";
+
+    // Convert DD/MM/YYYY → YYYY-MM-DD
+    let apiDate = "";
+    if (dateDisp.includes("/")) {
+      const [d, m, y] = dateDisp.split("/");
+      apiDate = `${y}-${m}-${d}`;
+    }
+
+    rowData["day"] = dayName;
+    rowData["date"] = apiDate;
+    rowData["saturday"] = saturday;
+    rowData["holiday"] = holiday;
+    rowData["start_time"] = startVal;
+    rowData["end_time"] = endVal;
+    rowData["task"] = taskVal;
+    rowData["totalHours"] = totalVal;
+
+    work_day_entries.push(rowData);
+  });
+
+  return { work_day_entries };
+}
+
+// === Collect Tax Form Fields ===
+function collectclockFormFields() {
+  const fieldNames = ['id_number'];
+
+  const taxData = {};
+  fieldNames.forEach(name => {
+    const input = document.getElementById(name);
+    taxData[name] = input ? input.value.trim() : '';
+  });
+
+  return taxData;
+}
+
+// === Save Monthly Clock Hours  ===
+async function saveClockMonthsHours(event) {
+    event.preventDefault();
+
+    await updateDays();   
+
+    // === Collect employee info ===
+    const employeeId   = document.getElementById('employee_id').value.trim();
+    const employeeName = document.getElementById('employee_name')?.value?.trim() || '';
+    const idNumber     = document.getElementById('id_number')?.value?.trim() || '';
+
+    const selectedMonth = document.getElementById('employeeMonth').value.trim();
+    const selectedYear  = document.getElementById('employeeYear').value.trim();
+
+    // === Collect table data AFTER refresh ===
+    const { work_day_entries } = collectclockHoursTable();
+    const taxData = collectclockFormFields();
+
+    // === Build payload ===
+    const payload = {
+        employee_id: employeeId,
+        employee_name: employeeName,
+        id_number: idNumber,
+        month: selectedMonth,
+        year: selectedYear,
+        hours_table_clock: { work_day_entries },
+        tax_data: taxData
+    };
+
+    // === Send to backend ===
+    fetch('/save_clock_hours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        showWindowsSuccess(`✅ ${data.message || 'הנתונים נשמרו בהצלחה'}`);
+    })
+    .catch(err => {
+        alert('שגיאה בשמירת הנתונים');
+        console.error(err);
+    });
+}
+
+</script>
+
+
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Keyboard navigation inside dynamic table
+    const tableBody = document.getElementById('table-body');
+    if (tableBody) {
+        tableBody.addEventListener('keydown', function (event) {
+            const key = event.key;
+            const currentInput = event.target;
+
+            if (currentInput.tagName === 'INPUT') {
+                const currentRow = currentInput.closest('tr');
+                const allRows = Array.from(tableBody.querySelectorAll('tr'));
+                const rowIndex = allRows.indexOf(currentRow);
+                const allInputsInRow = Array.from(currentRow.querySelectorAll('input'));
+                const colIndex = allInputsInRow.indexOf(currentInput);
+
+                switch (key) {
+                    case 'ArrowUp':
+                        if (rowIndex > 0) {
+                            const inputAbove = allRows[rowIndex - 1].querySelectorAll('input')[colIndex];
+                            if (inputAbove) inputAbove.focus();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'ArrowDown':
+                        if (rowIndex < allRows.length - 1) {
+                            const inputBelow = allRows[rowIndex + 1].querySelectorAll('input')[colIndex];
+                            if (inputBelow) inputBelow.focus();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'ArrowLeft':
+                        if (colIndex < allInputsInRow.length - 1) {
+                            allInputsInRow[colIndex + 1].focus();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'ArrowRight':
+                        if (colIndex > 0) {
+                            allInputsInRow[colIndex - 1].focus();
+                        }
+                        event.preventDefault();
+                        break;
+                }
+            }
+        });
+    }
+});
+</script>
+
+
+<script>
+  const all_clock_hours = {{ all_clock_hours|safe }};
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // אם המשתמש הוא עובד — למלא אוטומטית את מספר העובד ולנעול את השדה
+    if (userRole === "employee" && employeeId) {
+        const empField = document.getElementById("employee_id");  // או "employee_id" אם לא שינית
+        if (empField) {
+            empField.value = employeeId;
+            empField.disabled = true;
+        }
+    }
+});
+</script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>
+

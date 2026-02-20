@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ניהול משתמשים</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; background: #111; color: #eee; }
+        h2 { text-align: center; margin-top: 20px; }
+        table { width: 95%; margin: 20px auto; border-collapse: collapse; background: #1e1e1e; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: center; }
+        th { background: #333; }
+        .controls-row {
+            width: 95%;
+            margin: 10px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-button, .delete-button, .print-button, .renew-button, .reset-link-button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-button { background: #555; color: #fff; }
+        .delete-button { background: #b00020; color: #fff; }
+        .print-button { background: #1976d2; color: #fff; }
+        .renew-button { background: #388e3c; color: #fff; }
+        .reset-link-button { background: #7b1fa2; color: #fff; margin-top: 4px; }
+        .active { color: #4caf50; font-weight: bold; }
+        .expired { color: #f44336; font-weight: bold; }
+        .select-box { transform: scale(1.2); }
+    </style>
+</head>
+<body>
+
+    <h2>משתמשים שנרשמו</h2>
+
+    <!-- שורת כפתורים עליונה -->
+    <div class="controls-row">
+        <!-- חזרה לדף הבית -->
+        <a href="{{ url_for('index') }}" class="back-button">⬅️ חזרה לדף הבית</a>
+
+        <!-- מחיקת משתמשים נבחרים -->
+        <form id="delete-form" method="POST" action="{{ url_for('delete_selected_users') }}"
+              onsubmit="return confirm('האם אתה בטוח שברצונך למחוק את המשתמשים שנבחרו?');">
+            <button type="submit" class="delete-button">🗑️ מחק נבחרים</button>
+        </form>
+
+        <!-- הדפסה -->
+        <button type="button" onclick="window.print()" class="print-button">🖨️ הדפס רשימה</button>
+    </div>
+
+    <!-- טבלה -->
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all"></th>
+                <th>שם משתמש</th>
+                <th>אימייל</th>
+                <th>תפקיד</th>
+                <th>נרשם בתאריך</th>
+                <th>כניסה אחרונה</th>
+                <th>סטטוס גישה</th>
+                <th>זמן נותר (שניות)</th>
+                <th>ניהול גישה</th>
+                <th>ניהול תפקיד</th>
+                <th>קישור קביעת סיסמה</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <!-- בחירה למחיקה -->
+                <td>
+                    <input type="checkbox" name="delete_ids" value="{{ user.id }}"
+                           class="select-box" form="delete-form">
+                </td>
+
+                <!-- שם -->
+                <td>{{ user.username or user.email }}</td>
+
+                <!-- אימייל -->
+                <td>{{ user.email }}</td>
+
+                <!-- תפקיד -->
+                <td>{{ user.role }}</td>
+
+                <!-- נרשם -->
+                <td>
+                    {% if user.created_at %}
+                        {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    {% else %}
+                        לא זמין
+                    {% endif %}
+                </td>
+
+                <!-- כניסה אחרונה -->
+                <td>
+                    {% if user.last_login %}
+                        {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                    {% else %}
+                        לא נכנס עדיין
+                    {% endif %}
+                </td>
+
+                <!-- סטטוס גישה -->
+                <td class="{% if '⛔' in user.status_label %}expired{% else %}active{% endif %}">
+                    {{ user.status_label }}
+                </td>
+
+                <!-- זמן נותר -->
+                <td>
+                    {% if user.seconds_left is not none and user.seconds_left > 0 %}
+                        {{ user.seconds_left }}
+                    {% elif user.seconds_left == 0 %}
+                        פג תוקף
+                    {% else %}
+                        ללא הגבלה
+                    {% endif %}
+                </td>
+
+                <!-- ניהול גישה (סטטוס + זמן) -->
+                <td>
+                    {% if is_owner %}
+                    <form method="POST" action="{{ url_for('update_access') }}">
+                        <input type="hidden" name="email" value="{{ user.email }}">
+
+                        <!-- סטטוס -->
+                        <select name="status">
+                            <option value="active"
+                                {% if '✅' in user.status_label %}selected{% endif %}>פעיל</option>
+                            <option value="blocked"
+                                {% if 'חסום' in user.status_label %}selected{% endif %}>חסום</option>
+                        </select>
+
+                        <!-- זמן גישה -->
+                        <select name="duration">
+                            <option value="">ללא הגבלה</option>
+                            <option value="900">15 דקות</option>
+                            <option value="1800">30 דקות</option>
+                            <option value="3600">1 שעה</option>
+                            <option value="43200">12 שעות</option>
+                            <option value="86400">1 יום</option>
+                            <option value="604800">1 שבוע</option>
+                            <option value="2592000">1 חודש</option>
+                            <option value="31536000">1 שנה</option>
+                        </select>
+
+                        <button type="submit" class="renew-button">עדכן</button>
+                    </form>
+                    {% else %}
+                        אין הרשאה
+                    {% endif %}
+                </td>
+
+                <!-- ניהול תפקיד -->
+                <td>
+                    {% if is_owner %}
+                    <form method="POST" action="{{ url_for('update_role') }}">
+                        <input type="hidden" name="email" value="{{ user.email }}">
+                        <select name="role" onchange="this.form.submit()">
+                            <option value="customer" {% if user.role == 'customer' %}selected{% endif %}>לקוח</option>
+                            <option value="employee" {% if user.role == 'employee' %}selected{% endif %}>עובד</option>
+                            <option value="owner" {% if user.role == 'owner' %}selected{% endif %}>בעלים</option>
+                        </select>
+                    </form>
+                    {% else %}
+                        {{ user.role }}
+                    {% endif %}
+                </td>
+
+                <!-- שליחת לינק קביעת סיסמה -->
+                <td>
+                    {% if is_owner %}
+                    <form method="POST" action="{{ url_for('send_reset_link') }}">
+                        <input type="hidden" name="email" value="{{ user.email }}">
+                        <button type="submit" class="reset-link-button">
+                            שלח לינק סיסמה
+                        </button>
+                    </form>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        // סימון כל הצ'קבוקסים
+        document.getElementById('select-all').addEventListener('change', function () {
+            const checked = this.checked;
+            document.querySelectorAll('.select-box').forEach(cb => {
+                cb.checked = checked;
+            });
+        });
+    </script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

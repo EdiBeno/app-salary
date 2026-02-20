@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>טופס B102 - דו"ח שנתי לעובד</title>
+  <script src="{{ url_for('static', filename='formulas.js') }}?v={{ time.time() }}" defer></script>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <style>
+    /* ===== TOP BUTTONS ===== */
+    .top-buttons {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        z-index: 9999;
+        width: 8.2cm;
+    }
+
+    .top-buttons button {
+        font-weight: bold;
+        font-size: 17px;
+        cursor: pointer;
+        width: 100%;
+        height: 0.6cm;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+        transition: 0.2s ease-in-out;
+    }
+
+    .top-buttons button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(0,0,0,0.35);
+    }
+
+    .top-buttons button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* ===== buttons For XML Json ===== */
+    .button-b102 {
+      background: #0078ff;
+      color: white;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 15px;
+      min-height: 0.6cm; 
+      width: 4cm;       
+      transition: 0.2s;
+    }
+    .button-b102:hover {
+       background: #005fcc;
+    }
+    .output-box {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    /* ===== Hide buttons when printing ===== */
+    @media print {
+        .top-buttons {
+            display: none !important;
+            visibility: hidden !important;
+        }
+    }
+
+    /* ===== A4 PAGE ===== */
+    @page {
+        margin: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        direction: rtl;
+        margin: 0;
+        padding: 0;
+    }
+
+    .form-container {
+        position: relative;
+        width: 800px;
+        height: 1128px;
+        background-size: cover;
+        background-repeat: no-repeat;
+        margin: 20px auto;
+        border: none; /* ניקוי מסגרת */
+    }
+
+    /* שדות כלליים */
+    .field {
+        position: absolute;
+        background: transparent;
+        z-index: 9999;
+        outline: none;
+        font-size: 15px;
+        font-weight: bold;
+        color: #000;
+        border: none;
+        text-align: right;
+        /*border: 1px dashed red;*/        
+    }
+
+    /* שדות סכום */
+    .sum-field {
+        width: 120px;
+        height: 22px;
+    }
+
+    /* הדפסה — שמירה על הרקע */
+    @media print {
+        .form-container {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            background-color: white !important;
+            background-image: url('{{ url_for('static', filename='img/Form B102.png') }}') !important;
+            background-size: 100% 100% !important;
+            background-repeat: no-repeat !important;
+            background-position: -5px -100px !important;
+        }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ===== TOP BUTTONS ===== -->
+<div class="top-buttons">
+
+  <!-- Go to Main Page -->
+  <a href="{{ url_for('index') }}" style="text-decoration:none;">
+    <button type="button" style="background-color:#007bff; color:white;">
+      עבור לדף הראשי
+    </button>
+  </a>
+
+  <!-- Print Form -->
+  <button type="button" onclick="window.print()" style="width: 4cm; height: 0.6cm; font-size: 17px; background-color:#28a745; color:white;">
+    הדפס טופס B102
+  </button>
+
+  <!-- Save Form -->
+  <button type="button" id="saveB102Btn" style="background-color:#007bff; color:white;">
+    שמור טופס B102
+  </button>
+
+  <!-- Clear Form B102 -->
+  <form method="POST" action="{{ url_for('clear_formB102') }}" style="display:inline;">
+    <button type="submit" style="background-color:#dc3545; color:white;">
+      נקה טופס B102
+    </button>
+  </form>
+
+  <!-- Create Form B102 Fields To Folder -->
+    <button type="button"
+        onclick="saveFormB102()"
+    <button type="button" style="width: 4.5cm; height: 0.6cm; font-size: 17px; background-color:#fff8b3; color:#000;">  
+  📄 צור JSON + XML
+    </button>
+
+  <!-- Send Form B102 To Tax Office Requst  -->
+    <form method="POST" action="/send_B102_to_tax" style="display:inline;">
+    <button type="submit" style="background-color:#007bff; color:white;">
+        שדר לרשות המיסים
+    </button>
+  </form>
+
+</div>
+
+<!-- ===== FORM STARTS HERE ===== -->
+<form id="formB102" method="POST" action="/form_B102">
+  <input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+  <input type="hidden" name="month" value="{{ selected_month }}">
+  <input type="hidden" name="year" value="{{ selected_year }}">
+
+<!-- ====== טופס B102 — רקע ====== -->
+  <div class="form-container"
+       style="background-image: url('{{ url_for('static', filename='img/Form B102.png') }}');
+              background-size: 100% 100%;
+              background-repeat: no-repeat;
+              background-position: -5px -100px;
+              position: relative;
+              width: 800px;
+              height: 1128px;
+              margin: 20px auto;">
+
+    <!-- ===== פרטי מעסיק ===== -->
+
+    <!-- מספר תיק ניכויים (taxFileNumber) -->
+    <input type="text"
+           name="taxFileNumber"
+           class="field tax-file"
+           value="{{ form_data.taxFileNumber }}"
+           style="top:72px; right:525px; width:110px; height:22px;">
+
+    <!-- שם המעסיק -->
+    <input type="text"
+           name="companyName"
+           class="field company-name"
+           value="{{ form_data.companyName }}"
+           style="top:39px; right:366px; width:300px; height:20px;">
+
+    <!-- ===== תקופת דיווח ===== -->
+    <!-- חודש -->
+    <input type="text"
+           name="reportMonth"
+           class="field report-month"
+           value="{{ form_data.reportMonth }}"
+           style="top:72px; right:482px; width:22px; height:22px;">
+
+    <!-- שנה -->
+    <input type="text"
+           name="reportYear"
+           class="field report-year"
+           value="{{ form_data.reportYear }}"
+           style="top:72px; right:432px; width:48px; height:22px;">
+
+                            <!-- =====  שדות טופס לפי המיפוי  ===== -->
+
+    <!-- ===== עמודה 1 ===== -->
+
+    <!--א. מספר עובדים רגילים -- טור 1  -->
+<input type="text" name="NumEmployees" class="field" value="{{ form_data.NumEmployees }}" style="top:130px; right:525px;">
+    <!--ב. סה"כ שכר ששולם -- טור 1  -->
+<input type="text" name="regular_salary" class="field" value="{{ form_data.regular_salary_hidden }}" style="top:157px; right:525px;">
+    <!--ג. שכר בשיעור מופחת לעובדים  -- טור 1   -->
+<input type="text" name="reduced_salary" class="field" value="{{ form_data.reduced_salary_hidden }}" style="top:184px; right:525px;">
+    <!--ד. שכר מעל ההכנסה המירבית לעובדים -- טור 1   -->
+<input type="text" name="employeeAboveMaxSalary" class="field" value="{{ form_data.employeeAboveMaxSalary }}" style="top:212px; right:525px;">
+    <!--ה. שכר בשיעור מופחתלמעסיק -- טור 1    -->
+<input type="text" name="employerReducedSalary" class="field" value="{{ form_data.reduced_salary_hidden }}" style="top:239px; right:525px;">
+    <!--ו. שכר מעל ההכנסה המירבית למעסיק  -- טור 1  -->
+<input type="text" name="employerAboveMaxSalary" class="field" value="{{ form_data.employerAboveMaxSalary }}" style="top:266px; right:525px;">
+   <!--ז. סה"כ דמי ביטוח -- טור 1   -->
+<input type="text" name="finalTotalsPaid" class="field" value="{{ form_data.finalTotalsPaid }}" style="top:294px; right:525px;">
+    <!--ח. מספר העובדים בטור 1 ששכרם עד השכר המופחת -- טור 1  -->
+<input type="text" name="reducedEmployeeCount" class="field" value="{{ form_data.reduced_count_hidden }}" style="top:325px; right:525px;">
+
+    <!-- ===== עמודה 4 ===== -->
+
+<!-- א. מספר עובדים רגילים -- טור 4 סה"כ -->
+<input type="text" name="NumEmployees_total" class="field"
+       value="{{ form_data.NumEmployees }}" style="top:130px; right:44px;">
+
+<!-- ב. סה"כ שכר ששולם -- טור 4 סה"כ -->
+<input type="text" name="regular_salary_total" class="field"
+       value="{{ form_data.regular_salary_hidden }}" style="top:157px; right:44px;">
+
+<!-- ג. שכר בשיעור מופחת לעובדים -- טור 4 סה"כ -->
+<input type="text" name="reduced_salary_total" class="field"
+       value="{{ form_data.reduced_salary_hidden }}" style="top:184px; right:44px;">
+
+<!-- ד. שכר מעל ההכנסה המירבית לעובדים -- טור 4 סה"כ -->
+<input type="text" name="employeeAboveMaxSalary_total" class="field"
+       value="{{ form_data.employeeAboveMaxSalary }}" style="top:212px; right:44px;">
+
+<!-- ה. שכר בשיעור מופחת למעסיק -- טור 4 סה"כ -->
+<input type="text" name="employerReducedSalary_total" class="field"
+       value="{{ form_data.reduced_salary_hidden }}" style="top:239px; right:44px;">
+
+<!-- ו. שכר מעל ההכנסה המירבית למעסיק -- טור 4 סה"כ -->
+<input type="text" name="employerAboveMaxSalary_total" class="field"
+       value="{{ form_data.employeeAboveMaxSalary }}" style="top:266px; right:44px;">
+
+<!-- ז. סה"כ דמי ביטוח -- טור 4 סה"כ -->
+<input type="text" name="finalTotalsPaid_total" class="field"
+       value="{{ form_data.finalTotalsPaid }}" style="top:294px; right:44px;">
+
+<!-- ח. מספר העובדים בטור 1 ששכרם עד השכר המופחת -- טור 4 סה"כ -->
+<input type="text" name="reducedEmployeeCount_total" class="field"
+       value="{{ form_data.finalTotalsPaid }}" style="top:325px; right:44px;">
+
+    <!-- ===== Hidden fields ===== -->
+    <input type="hidden" name="NumEmployees_hidden" id="NumEmployees_hidden">
+    <input type="hidden" name="totalGrossSalary_hidden" id="totalGrossSalary_hidden">
+
+    <input type="hidden" name="regular_salary_hidden" id="regular_salary_hidden">
+    <input type="hidden" name="reduced_salary_hidden" id="reduced_salary_hidden">
+    <input type="hidden" name="regular_count_hidden" id="regular_count_hidden">
+    <input type="hidden" name="reduced_count_hidden" id="reduced_count_hidden">
+    <input type="hidden" name="total_salary_hidden" id="total_salary_hidden">
+  </div>
+</form>
+
+<!-- =====================  JS FILLER ======================== -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // דוגמה: אם יש לך employees מהשרת
+    if (window.employeesData) {
+        const summary = calculateB102Summary(window.employeesData);
+
+        // הצבה בשדות שלך
+        document.querySelector("input[name='regular_salary']").value = summary.regularSalary;
+        document.querySelector("input[name='reduced_salary']").value = summary.reducedSalary;
+
+        document.querySelector("input[name='regular_salary_total']").value = summary.regularSalary;
+        document.querySelector("input[name='reduced_salary_total']").value = summary.reducedSalary;
+
+        document.querySelector("#regular_salary_hidden").value = summary.regularSalary;
+        document.querySelector("#reduced_salary_hidden").value = summary.reducedSalary;
+        document.querySelector("#total_salary_hidden").value = summary.totalSalary;
+
+        document.querySelector("#regular_count_hidden").value = summary.regularCount;
+        document.querySelector("#reduced_count_hidden").value = summary.reducedCount;
+    }
+});
+</script>
+
+<script>
+  // ===== Save Form Data Button =====
+  document.getElementById("saveB102Btn").onclick = function () {
+      const form = document.getElementById("formB102");
+      const formData = new FormData(form);
+      const jsonData = Object.fromEntries(formData.entries());
+
+      fetch("/save_form_B102", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jsonData)
+      })
+      .then(r => r.json())
+      .then(res => {
+          alert(res.message);
+      })
+      .catch(err => {
+          alert("שגיאה בשמירת טופס B102");
+          console.error(err);
+      });
+  };
+</script>
+
+<script>
+// ===== Save To Json XML Button =====
+function saveFormB102() {
+  const inputs = document.querySelectorAll("input");
+  const data = {};
+
+  inputs.forEach(input => {
+    if (input.name) data[input.name] = input.value;
+  });
+
+  const jsonData = {
+    employer: {
+      companyName: data.companyName || "",
+      taxFileNumber: data.taxFileNumber || "",
+      reportMonth: data.reportMonth || "",
+      reportYear: data.reportYear || ""
+    },
+    column1: {
+      numEmployees: data.NumEmployees || "",
+      regularSalary: data.regular_salary || "",
+      reducedSalary: data.reduced_salary || "",
+      employeeAboveMaxSalary: data.employeeAboveMaxSalary || "",
+      employerReducedSalary: data.employerReducedSalary || "",
+      employerAboveMaxSalary: data.employerAboveMaxSalary || "",
+      finalTotalsPaid: data.finalTotalsPaid || "",
+      reducedEmployeeCount: data.reducedEmployeeCount || ""
+    },
+    column4: {
+      numEmployeesTotal: data.NumEmployees_total || "",
+      regularSalaryTotal: data.regular_salary_total || "",
+      reducedSalaryTotal: data.reduced_salary_total || "",
+      employeeAboveMaxSalaryTotal: data.employeeAboveMaxSalary_total || "",
+      employerReducedSalaryTotal: data.employerReducedSalary_total || "",
+      employerAboveMaxSalaryTotal: data.employerAboveMaxSalary_total || "",
+      finalTotalsPaidTotal: data.finalTotalsPaid_total || "",
+      reducedEmployeeCountTotal: data.reducedEmployeeCount_total || ""
+    },
+    totals: {
+      totalGrossSalary: data.totalGrossSalary || "",
+      totalNationalInsurance: data.totalNationalInsurance || "",
+      totalHealthInsurance: data.totalHealthInsurance || "",
+      totalEmpPension: data.totalEmpPension || "",
+      totalSelfPension: data.totalSelfPension || "",
+      totalPensionDeduction: data.totalPensionDeduction || "",
+      totalProvidentDeduction: data.totalProvidentDeduction || "",
+      totalPensionVal: data.totalPensionVal || "",
+      totalCompVal: data.totalCompVal || "",
+      totalDisabilityVal: data.totalDisabilityVal || "",
+      employerPension: data.employerPension || "",
+      totalEmpDeductions: data.totalEmpDeductions || "",
+      finalTotalsPaid: data.finalTotalsPaid || ""
+    }
+  };
+
+  // Build XML
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<FormB102Report>\n';
+
+  xml += '  <Employer>\n';
+  xml += `    <CompanyName>${jsonData.employer.companyName}</CompanyName>\n`;
+  xml += `    <TaxFileNumber>${jsonData.employer.taxFileNumber}</TaxFileNumber>\n`;
+  xml += `    <ReportMonth>${jsonData.employer.reportMonth}</ReportMonth>\n`;
+  xml += `    <ReportYear>${jsonData.employer.reportYear}</ReportYear>\n`;
+  xml += '  </Employer>\n';
+
+  xml += '  <Column1>\n';
+  xml += `    <NumEmployees>${jsonData.column1.numEmployees}</NumEmployees>\n`;
+  xml += `    <RegularSalary>${jsonData.column1.regularSalary}</RegularSalary>\n`;
+  xml += `    <ReducedSalary>${jsonData.column1.reducedSalary}</ReducedSalary>\n`;
+  xml += `    <EmployeeAboveMaxSalary>${jsonData.column1.employeeAboveMaxSalary}</EmployeeAboveMaxSalary>\n`;
+  xml += `    <EmployerReducedSalary>${jsonData.column1.employerReducedSalary}</EmployerReducedSalary>\n`;
+  xml += `    <EmployerAboveMaxSalary>${jsonData.column1.employerAboveMaxSalary}</EmployerAboveMaxSalary>\n`;
+  xml += `    <FinalTotalsPaid>${jsonData.column1.finalTotalsPaid}</FinalTotalsPaid>\n`;
+  xml += `    <ReducedEmployeeCount>${jsonData.column1.reducedEmployeeCount}</ReducedEmployeeCount>\n`;
+  xml += '  </Column1>\n';
+
+  xml += '  <Column4>\n';
+  xml += `    <NumEmployeesTotal>${jsonData.column4.numEmployeesTotal}</NumEmployeesTotal>\n`;
+  xml += `    <RegularSalaryTotal>${jsonData.column4.regularSalaryTotal}</RegularSalaryTotal>\n`;
+  xml += `    <ReducedSalaryTotal>${jsonData.column4.reducedSalaryTotal}</ReducedSalaryTotal>\n`;
+  xml += `    <EmployeeAboveMaxSalaryTotal>${jsonData.column4.employeeAboveMaxSalaryTotal}</EmployeeAboveMaxSalaryTotal>\n`;
+  xml += `    <EmployerReducedSalaryTotal>${jsonData.column4.employerReducedSalaryTotal}</EmployerReducedSalaryTotal>\n`;
+  xml += `    <EmployerAboveMaxSalaryTotal>${jsonData.column4.employerAboveMaxSalaryTotal}</EmployerAboveMaxSalaryTotal>\n`;
+  xml += `    <FinalTotalsPaidTotal>${jsonData.column4.finalTotalsPaidTotal}</FinalTotalsPaidTotal>\n`;
+  xml += `    <ReducedEmployeeCountTotal>${jsonData.column4.reducedEmployeeCountTotal}</ReducedEmployeeCountTotal>\n`;
+  xml += '  </Column4>\n';
+
+  xml += '  <Totals>\n';
+  xml += `    <TotalGrossSalary>${jsonData.totals.totalGrossSalary}</TotalGrossSalary>\n`;
+  xml += `    <TotalNationalInsurance>${jsonData.totals.totalNationalInsurance}</TotalNationalInsurance>\n`;
+  xml += `    <TotalHealthInsurance>${jsonData.totals.totalHealthInsurance}</TotalHealthInsurance>\n`;
+  xml += `    <TotalEmpPension>${jsonData.totals.totalEmpPension}</TotalEmpPension>\n`;
+  xml += `    <TotalSelfPension>${jsonData.totals.totalSelfPension}</TotalSelfPension>\n`;
+  xml += `    <TotalPensionDeduction>${jsonData.totals.totalPensionDeduction}</TotalPensionDeduction>\n`;
+  xml += `    <TotalProvidentDeduction>${jsonData.totals.totalProvidentDeduction}</TotalProvidentDeduction>\n`;
+  xml += `    <TotalPensionVal>${jsonData.totals.totalPensionVal}</TotalPensionVal>\n`;
+  xml += `    <TotalCompVal>${jsonData.totals.totalCompVal}</TotalCompVal>\n`;
+  xml += `    <TotalDisabilityVal>${jsonData.totals.totalDisabilityVal}</TotalDisabilityVal>\n`;
+  xml += `    <EmployerPension>${jsonData.totals.employerPension}</EmployerPension>\n`;
+  xml += `    <TotalEmpDeductions>${jsonData.totals.totalEmpDeductions}</TotalEmpDeductions>\n`;
+  xml += `    <FinalTotalsPaid>${jsonData.totals.finalTotalsPaid}</FinalTotalsPaid>\n`;
+  xml += '  </Totals>\n';
+
+  xml += '</FormB102Report>';
+
+    // Save XML + JSON to server
+    fetch("/save_formB102_report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ...jsonData,
+            xml: xml
+        })
+    })
+    .then(res => res.json())
+    .then(res => {
+        alert("טופס B102 נשמר בהצלחה בתיקייה!");
+    });
+}
+</script>
+
+<!--  DevTools F12 Browser Blocker Script  -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

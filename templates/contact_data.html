@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוכנה חישוב שכר</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='employee_data.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="column1"></div>
+        <div class="column2">
+            <h1>מידע נתוני עובדים</h1>
+
+            <!-- Empty row after -->
+            <div style="height: 0.1cm;"></div>
+
+            <div style="display: flex; gap: 10px;">
+                <!-- Go to Main Page Button -->
+                <a href="{{ url_for('index') }}" style="text-decoration: none;">
+                    <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                        עבור לדף הראשי
+                    </button>
+                </a>
+
+        <!-- Go to Contact Form Page Button -->
+        <a href="{{ url_for('contact_form') }}" style="text-decoration: none;">
+            <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                חזור לאיש קשר
+            </button>
+        </a>
+
+                <!-- Clear Data Button -->
+                <button type="button" style="font-weight: bold; width: 3cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                    נקה מידע
+                </button>
+            </div>
+
+            <!-- Empty row after -->
+            <div style="height: 0.1cm;"></div>
+
+            <!-- Display saved data -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID עובד</th>
+                        <th>תאריך</th>
+                        <th>שם העובד</th>
+                        <th>מספר זהות</th>
+                        <th>כתובת</th>
+                        <th>עיר</th>
+                        <th>מיקוד</th>
+                        <th>טלפון</th>
+                        <th>שווי ביגוד</th>
+                        <th>שווי רכב</th>
+                        <th>מייל</th>
+                        <th>תחילת עבודה</th>
+                        <th>מספר בנק</th>
+                        <th>מספר סניף</th>
+                        <th>חשבון בנק</th>
+                        <th>תאריך לידה</th>
+                        <th>סכום זיכוי ישוב חודשי</th>
+                        <th>אחוז זיכוי ישוב חודשי</th>
+                        <th>שווי ארוחת צהריים</th>
+                        <th>שווי טלפון נייד</th>
+                        <th>תעריף לשעה</th>
+                        <th>מספר עובד</th>
+                        <th>משכורת י"ג</th>
+                        <th>הודעה</th>
+                        <th>מחלקה עובד</th>
+                        <th>השכם העסקה %</th>
+                        <th>מצב משפחתי</th>
+                        <th>נקודות זיכוי מס</th>
+                        <th>קופת חולים</th>
+                        <th>ביטוח לאומי</th>
+                        <th>מס הכנסה</th>
+                        <th>סוג חוזה</th>
+                        <th>ילד נכה נק. זיכוי</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.id }}</td>
+                        <td>{{ employee.formatted_date }}</td>
+                        <td>{{ employee.employee_name }}</td>
+                        <td>{{ employee.id_number }}</td>
+                        <td>{{ employee.address }}</td>
+                        <td>{{ employee.city }}</td>
+                        <td>{{ employee.postal_code }}</td>
+                        <td>{{ employee.phone }}</td>
+                        <td>{{ employee.formatted_clothing_value }}</td>
+                        <td>{{ employee.formatted_cars_value }}</td>
+                        <td>{{ employee.email }}</td>
+                        <td>{{ employee.start_date }}</td>
+                        <td>{{ employee.bank_number }}</td>
+                        <td>{{ employee.branch_number }}</td>
+                        <td>{{ employee.account_number }}</td>
+                        <td>{{ employee.date_of_birth }}</td>
+                        <td>{{ employee.formatted_monthly_city_tax_tops }}</td>
+                        <td>{{ employee.city_value_percentage }}</td>
+                        <td>{{ employee.formatted_lunch_value }}</td>
+                        <td>{{ employee.formatted_mobile_value }}</td>
+                        <td>{{ employee.formatted_hourly_rate }}</td>
+                        <td>{{ employee.employee_number }}</td>
+                        <td>{{ employee.formatted_thirteenth_salary }}</td>
+                        <td>{{ employee.message }}</td>
+                        <td>{{ employee.work_apartment }}</td>
+                        <td>{{ employee.work_percent }}</td>
+                        <td>{{ employee.marital_status }}</td>
+                        <td>{{ employee.tax_credit_points }}</td>
+                        <td>{{ employee.hospital }}</td>
+                        <td>{{ employee.social_number }}</td>
+                        <td>{{ employee.irs_status }}</td>
+                        <td>{{ employee.contract_status }}</td>
+                        <td>{{ employee.tax_point_child }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+</body>
+</html>

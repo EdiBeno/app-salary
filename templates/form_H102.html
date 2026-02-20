@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>טופס 0102-ה</title>
+  <script src="{{ url_for('static', filename='formulas.js') }}?v={{ time.time() }}" defer></script>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <style>
+    /* ===== TOP BUTTONS ===== */
+    .top-buttons {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        z-index: 9999;
+        width: 8.2cm;
+    }
+
+    .top-buttons button {
+        font-weight: bold;
+        font-size: 17px;
+        cursor: pointer;
+        width: 100%;
+        height: 0.6cm;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+        transition: 0.2s ease-in-out;
+    }
+
+    .top-buttons button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 10px rgba(0,0,0,0.35);
+    }
+
+    .top-buttons button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+
+    body {
+      font-family: Arial, "Segoe UI", sans-serif;
+      direction: rtl;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+
+    .page {
+      width: 21cm;
+      min-height: 29.7cm;
+      margin: 0 auto;
+      background: #ffffff;
+      box-sizing: border-box;
+      padding: 1.5cm;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+
+    .row {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+           /* רווח קטן מהשוליים */
+    .page {
+      padding-right: 1.2cm;   /* רווח גדול מהצד הימני */
+      padding-left: 0.3cm;  /* נשאר כמו שהיה */
+      padding-top: 0.8cm;
+      padding-bottom: 0.8cm;
+    }
+
+    .col {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 14px;
+    }
+
+           /* רווח גדול בין טור 1 לטור 2 */
+    .col:first-child {
+      margin-left: 14px;
+    }
+
+           /* רווח שווה בין טור 2 לטור 3 */
+    .col:nth-child(2) {
+      margin-left: 14px;
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .form-header h1 {
+      font-size: 20px;
+      margin: 0 0 5px;
+    }
+
+    .form-header h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+    }
+
+    .form-header .period {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .form-meta {
+      font-size: 14px;
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .table-box {
+        width: 100%;
+        height: 0.6cm;
+        border-left: 1px solid #000;
+        border-bottom: 1px solid #000;
+        border-top: none;
+        border-right: 1px solid #000;
+        margin-bottom: 4px;
+        position: relative;
+    }
+
+    .table-label {
+        font-size: 13px;
+        margin-bottom: 12px;
+        padding-right: 2px;
+    }
+
+    /* ===== Read On Right Tablebox Hebrew סדר א → ב → ג → ד → ה → ו → ז → ח ===== */
+    .box-wrapper {
+      position: relative;
+      display: inline-block; /* חשוב כדי לא לשבור עימוד */
+    }
+
+    .box-wrapper::before {
+      content: attr(data-label);
+      position: absolute;
+      right: -20px; /* כמה ימינה */
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    /* ===== buttons For XML Json ===== */
+    .button-b102 {
+      background: #0078ff;
+      color: white;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 15px;
+      min-height: 0.6cm; 
+      width: 4cm;       
+      transition: 0.2s;
+    }
+    .button-b102:hover {
+       background: #005fcc;
+    }
+    .output-box {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+
+    /* ===== Hide buttons when printing ===== */
+    @media print {
+
+        @page {
+            size: A4;
+            margin: 0 ;
+        }
+
+        .top-buttons {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        .form-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: white !important;
+            background-size: 100% 100% !important;
+            background-repeat: no-repeat !important;
+            background-position: -25px -100px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
+
+</head>
+<body>
+
+<!-- ===== TOP BUTTONS ===== -->
+<div class="top-buttons">
+
+  <!-- Go to Main Page -->
+  <a href="{{ url_for('index') }}" style="text-decoration:none;">
+    <button type="button" style="background-color:#007bff; color:white;">
+      עבור לדף הראשי
+    </button>
+  </a>
+
+  <!-- Print Form -->
+  <button type="button" onclick="window.print()" style="width: 4cm; height: 0.6cm; font-size: 17px; background-color:#28a745; color:white;">
+    הדפס טופס H102
+  </button>
+
+  <!-- Save Form -->
+  <button type="button" id="saveH102Btn" style="background-color:#007bff; color:white;">
+    שמור טופס H102
+  </button>
+
+  <!-- Clear Form H102 -->
+  <form method="POST" action="{{ url_for('clear_formH102') }}" style="display:inline;">
+    <button type="submit" style="background-color:#dc3545; color:white;">
+      נקה טופס H102
+    </button>
+  </form>
+
+  <!-- Create Form H102 Fields To Folder -->
+    <button type="button"
+        onclick="saveFormH102()"
+    <button type="button" style="width: 4.5cm; height: 0.6cm; font-size: 17px; background-color:#fff8b3; color:#000;">  
+  📄 צור JSON + XML
+    </button>
+
+  <!-- Send Form H102 To Tax Office Requst  -->
+    <form method="POST" action="/send_H102_to_tax" style="display:inline;">
+    <button type="submit" style="background-color:#007bff; color:white;">
+        שדר לרשות המיסים
+    </button>
+  </form>
+
+</div>
+
+<!-- ===== FORM STARTS HERE ===== -->
+<form id="formH102" method="POST" action="/form_H102">
+  <input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+  <input type="hidden" name="month" value="{{ selected_month }}">
+  <input type="hidden" name="year" value="{{ selected_year }}">
+
+  <!-- מה שהשרת באמת צריך לשם הקבצים -->
+  <input type="hidden" name="reportMonth" value="{{ selected_month }}">
+  <input type="hidden" name="reportYear" value="{{ selected_year }}">
+
+  <div class="page">
+
+    <div class="form-header" style="height: 1.3cm; padding-top: 2.3cm;">
+        <h1>דו"ח על ניכויים ממשכורת ומשכר עבודה באיזור {{ company_city }} (טופס 0102-ה)</h1>
+
+        <div style="height:15px;"></div>
+
+        <div class="period" style="font-size:20px; font-weight:bold;">
+            לתקופה: {{ form_data.reportMonth }}/{{ form_data.reportYear }}
+        </div>
+    </div>
+
+    <div style="margin-right:0.2cm;">
+        <div style="height:15px;"></div>
+
+        <label style="font-size:16px; font-weight:bold;">שם מעסיק :</label>
+        <input type="text" class="clean-input"
+               name="companyName"
+               value="{{ form_data.companyName }}"
+               style="font-size:16px; border:none; outline:none; box-shadow:none;">
+
+        <br><br>
+
+        <label style="font-size:16px; font-weight:bold;">תיק ניכויים :</label>
+        <input type="text" class="clean-input"
+               name="taxFileNumber"
+               value="{{ form_data.taxFileNumber }}"
+               style="font-size:16px; border:none; outline:none; box-shadow:none;">
+    </div>
+
+    <div style="height:15px;"></div>
+
+    <!-- שורה עם 3 טורים -->
+    <div class="row">
+
+
+<!-- טור 1 -->
+<div class="col">
+
+<div class="box-wrapper" data-label="(א)">
+    <input class="table-box" type="text"
+           name="regular_salary_hidden"
+           value="{{ form_data.regular_salary_hidden }}">
+</div>
+<div class="table-label">משכורת לעובדים בתחום אילת שאינם בעלי שליטה או קרובים</div>
+
+<div class="box-wrapper" data-label="(ב)">
+    <input class="table-box" type="text"
+           name="eilat_regular_tax"
+           value="{{ form_data.eilat_regular_tax }}">
+</div>
+<div class="table-label">המס שנוכה ממשכורת ב - א</div>
+
+<div class="box-wrapper" data-label="(ג)">
+    <input class="table-box" type="text"
+           name="eilat_benefit_20"
+           value="{{ form_data.eilat_benefit_20 }}">
+</div>
+<div class="table-label">הטבה להקטנת עלויות השכר 20%</div>
+
+<div class="box-wrapper" data-label="(ד)">
+    <input class="table-box" type="text"
+           name="eilat_total_tax_after_benefit"
+           value="{{ form_data.eilat_total_tax_after_benefit }}">
+</div>
+<div class="table-label">סה"כ מס ממשכורת בתחום אילת פחות (ג)</div>
+</div>
+
+<!-- טור 2 -->
+<div class="col">
+
+<div class="box-wrapper" data-label="(ה)">
+    <input class="table-box" type="text"
+           name="controlling_salary"
+           value="{{ form_data.controlling_salary }}">
+</div>
+<div class="table-label">משכורת לבעלי שליטה או קרובים</div>
+
+<div style="height:15px;"></div>
+
+<div class="box-wrapper" data-label="(ו)">
+    <input class="table-box" type="text"
+           name="controlling_tax"
+           value="{{ form_data.controlling_tax }}">
+</div>
+<div class="table-label">המס שנוכה ממשכורת ב - ה"</div>
+</div>
+
+<!-- טור 3 -->
+<div class="col">
+
+<div class="box-wrapper" data-label="(ז)">
+    <input class="table-box" type="text"
+           name="outside_eilat_salary"
+           value="{{ form_data.outside_eilat_salary }}">
+</div>
+<div class="table-label">משכורת לעובדים מחוץ לתחום אילת</div>
+
+<div style="height:15px;"></div>
+
+<div class="box-wrapper" data-label="(ח)">
+    <input class="table-box" type="text"
+           name="outside_eilat_tax"
+           value="{{ form_data.outside_eilat_tax }}">
+</div>
+<div class="table-label">המס שנוכה ממשכורת ב - ז "</div>
+
+<div style="height:56px;"></div>
+
+<div class="box-wrapper" data-label="(ט)">
+    <input class="table-box" type="text"
+           name="total_tax_all"
+           value="{{ form_data.total_tax_all }}">
+</div>
+<div class="table-label">סה"כ מס ממשכורת ( ד ) + ( ו ) + ( ח )</div>
+
+        </div>
+    </div>
+
+</form>
+
+<!-- =====================  JS FILLER ======================== -->
+<script>
+  // ===== Save Form Data Button =====
+  document.getElementById("saveH102Btn").onclick = function () {
+      const form = document.getElementById("formH102");
+      const formData = new FormData(form);
+      const jsonData = Object.fromEntries(formData.entries());
+
+      fetch("/save_form_H102", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jsonData)
+      })
+      .then(r => r.json())
+      .then(res => {
+          alert(res.message);
+      })
+      .catch(err => {
+          alert("שגיאה בשמירת טופס B102");
+          console.error(err);
+      });
+  };
+</script>
+
+<script>
+// ===== Save To Json XML Button =====
+function saveFormH102() {
+    const inputs = document.querySelectorAll("input");
+    const data = {};
+
+  inputs.forEach(input => {
+    if (input.name) data[input.name] = input.value;
+  });
+
+    const jsonData = {
+        employer: {
+            companyName: data.companyName || "",
+            taxFileNumber: data.taxFileNumber || "",
+            reportMonth: data.reportMonth || data.month || "",
+            reportYear: data.reportYear || data.year || ""
+        },
+
+        columnA: {
+            regularSalary: data.regular_salary_hidden || "",
+            eilatRegularTax: data.eilat_regular_tax || "",
+            eilatBenefit20: data.eilat_benefit_20 || "",
+            eilatTotalTaxAfterBenefit: data.eilat_total_tax_after_benefit || ""
+        },
+
+        columnB: {
+            controllingSalary: data.controlling_salary || "",
+            controllingTax: data.controlling_tax || ""
+        },
+
+        columnC: {
+            outsideEilatSalary: data.outside_eilat_salary || "",
+            outsideEilatTax: data.outside_eilat_tax || "",
+            totalTaxAll: data.total_tax_all || ""
+        }
+    };
+
+    // Build XML
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<FormH102Report>\n';
+
+    xml += '  <Employer>\n';
+    xml += `    <CompanyName>${jsonData.employer.companyName}</CompanyName>\n`;
+    xml += `    <TaxFileNumber>${jsonData.employer.taxFileNumber}</TaxFileNumber>\n`;
+    xml += `    <ReportMonth>${jsonData.employer.reportMonth}</ReportMonth>\n`;
+    xml += `    <ReportYear>${jsonData.employer.reportYear}</ReportYear>\n`;
+    xml += '  </Employer>\n';
+
+    xml += '  <ColumnA>\n';
+    xml += `    <RegularSalary>${jsonData.columnA.regularSalary}</RegularSalary>\n`;
+    xml += `    <EilatRegularTax>${jsonData.columnA.eilatRegularTax}</EilatRegularTax>\n`;
+    xml += `    <EilatBenefit20>${jsonData.columnA.eilatBenefit20}</EilatBenefit20>\n`;
+    xml += `    <EilatTotalTaxAfterBenefit>${jsonData.columnA.eilatTotalTaxAfterBenefit}</EilatTotalTaxAfterBenefit>\n`;
+    xml += '  </ColumnA>\n';
+
+    xml += '  <ColumnB>\n';
+    xml += `    <ControllingSalary>${jsonData.columnB.controllingSalary}</ControllingSalary>\n`;
+    xml += `    <ControllingTax>${jsonData.columnB.controllingTax}</ControllingTax>\n`;
+    xml += '  </ColumnB>\n';
+
+    xml += '  <ColumnC>\n';
+    xml += `    <OutsideEilatSalary>${jsonData.columnC.outsideEilatSalary}</OutsideEilatSalary>\n`;
+    xml += `    <OutsideEilatTax>${jsonData.columnC.outsideEilatTax}</OutsideEilatTax>\n`;
+    xml += `    <TotalTaxAll>${jsonData.columnC.totalTaxAll}</TotalTaxAll>\n`;
+    xml += '  </ColumnC>\n';
+
+    xml += '</FormH102Report>';
+
+    // Save XML + JSON to server
+    fetch("/save_formH102_report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ...jsonData,
+            xml: xml
+        })
+    })
+    .then(res => res.json())
+    .then(res => {
+        alert("טופס H102 נשמר בהצלחה בתיקייה!");
+    });
+}
+</script>
+
+<!--  DevTools F12 Browser Blocker Script  -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

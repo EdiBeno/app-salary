@@ -1,0 +1,591 @@
+@media (max-width: 480px) {
+
+    /* ===== כפתורים ===== */
+    button {
+        width: 100% !important;
+        height: 1.1cm !important;
+        font-size: 16px !important;
+        margin: 4px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    a button {
+        width: 100% !important;
+    }
+
+    /* Back To Top Button */
+    #backToTopBtn {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 15px !important;
+        width: 70% !important;
+        padding: 10px !important;
+        font-size: 16px !important;
+        display: block !important;
+    }
+
+    /* ===== מיכלי FLEX ===== */
+    div[style*="flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    /* ===== כותרת TAX ===== */
+    .form-row {
+        font-size: 16px !important;
+        padding: 6px !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        height: auto !important;
+        margin: 0 !important;
+        text-align: center !important;
+    }
+
+
+    /* ===== HEADER ראשי ===== */
+    .header {
+        font-size: 20px !important;
+        padding: 8px !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        height: auto !important;
+        text-align: center !important;
+    }
+  }
+
+
+
+/* בסיס עיצוב לאפליקציה בעברית */
+body {
+  direction: rtl;
+  text-align: right;
+  margin: auto;
+  max-width: 96vw;
+  overflow-x: hidden;
+}
+
+/* עיצוב למסכים קטנים (ניידים) */
+@media screen and (max-width: 767px) {
+  body {
+    font-size: 16px;
+    padding: 1rem;
+  }
+}
+
+/* עיצוב למסכים גדולים (דסקטופ) */
+@media screen and (min-width: 768px) {
+  body {
+    font-size: calc(1.1vmin + 0.5vmax);
+    max-width: 96vw;
+    margin: auto;
+    overflow-x: hidden;
+  }
+
+  .form-label,
+  .form-input,
+  input,
+  button,
+  .bold-button,
+  .header {
+    font-size: calc(0.6vw + 12px);
+  }
+
+  .table-box {
+    width: 100%;
+    max-width: 1800px;
+    margin: auto;
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+
+  .table-box td,
+  .table-box th {
+    font-size: calc(0.5vw + 12px);
+  }
+}
+
+
+/* Table styles עיצוב טבלה בסיסי  */
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 17px;
+}
+.table-box td {
+    width: 2.5cm; /* Adjusted width to make columns smaller */
+}
+.small-row td {
+    width: 2.5cm; /* Adjusted width to make columns smaller */
+}
+.bold-header {
+    font-weight: bold;
+}
+.wrap-text {
+    white-space: nowrap;
+}
+/* Additional styles for the table box */
+.table-box {
+    width: 100%;
+    border-collapse: collapse;
+}
+.bold-button {
+    font-weight: bold;
+    font-size: 17px;
+}
+.blue {
+    background-color: blue;
+}
+.gray {
+    background-color: gray;
+}
+.yellow {
+    background-color: yellow;
+}
+ .red-font {
+    color: red;
+}
+/* Clear day btn On Hourscard */
+.clear-day-btn {
+    font-weight: bold;
+    color: inherit; 
+}
+.title {
+    margin-bottom: 5px; /* Adjust this value (e.g., 0px, 10px) as needed */
+    /* You might also want to remove the top margin if needed: */
+    margin-top: 10px; 
+}
+.header {
+    background: linear-gradient(to right, yellow, darkblue);
+    color: black;
+    padding: 10px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+ }
+ .table-header {
+     background-color: lightblue;
+     color: black;
+     font-weight: bold;
+     text-align: center;
+ }
+/* Form container styles */
+.form-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(6, auto);
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+
+           /* width: 100%; /* אתה יכול לשנות את הרוחב לפי הצורך */
+           /* padding: 20px;*/
+           /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);*/
+           /* border-radius: 8px;*/
+}
+/* Form column and row styles */
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.form-row {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    direction: rtl;
+}
+    .form-label {
+    font-size: 17px;
+    justify-conte00BFFFnt: center;
+    align-items: center;
+    font-weight: bold;
+}
+.form-input {
+    height: 0.5cm;
+    font-weight: bold;
+    font-size: 15px;
+}
+/* Holidays */
+.holiday {
+  color: lightgreen;
+}
+/* Saturdays */
+.saturday {
+  color: lightblue;
+}
+/* Hover */
+#hours-table-clock tr:hover td {
+  background: #00FFC6;
+}
+/* Body margin */
+body {
+  /* background-color: #1E90FF; /* Vivid Sky Blue */
+  /* background-color: #BF00FF; /* Electric Purple */
+  /* background-color: #FFD300; /* Cyber Yellow */
+  /* background-color: #708090; /* Slate Gray */
+  /* background-color: #00FFC6; /* Mint Green */
+
+    background-color: #f9f9f9;
+    justify-content: center; /* מרכז את התוכן אופקית */
+   /* margin-left: 1%;*/
+}
+/* Adjust column A width */
+td:nth-child(1), th:nth-child(1) {
+    width: 2.5cm; /* Increased width to prevent wrapping */
+    white-space: nowrap; /* Ensure no wrapping */
+    border: 1px solid black; /* Add border */
+}
+/* Adjust column B width */
+td:nth-child(2), th:nth-child(2) {
+    width: 2.5cm; /* Increased width to prevent wrapping */
+    white-space: nowrap; /* Ensure no wrapping */
+    border: 1px solid black; /* Add border */
+}
+/* Increase height of the first row */
+.table-box th {
+    height: 0.6cm; /* Increased height */
+}
+.row-height {
+    height: 0.2cm;
+}
+.hours-calculated {
+    font-weight: bold;
+    width: 2cm;
+    text-align: center;
+}
+
+/* Hide specific columns */
+td:nth-child(3), th:nth-child(3),
+td:nth-child(4), th:nth-child(4) {
+    display: none;
+}
+
+/* Ensure columns 1, 2, 5, 6, 16, 17, 19, and 25 are visible */
+td:nth-child(1), th:nth-child(1),
+td:nth-child(2), th:nth-child(2),
+td:nth-child(5), th:nth-child(5),
+td:nth-child(6), th:nth-child(6),
+td:nth-child(7), th:nth-child(7),
+td:nth-child(8), th:nth-child(8),
+td:nth-child(9), th:nth-child(9) {
+    display: table-cell;
+}
+
+
+#employeeDataContainersalarySection tr {
+   height: 0.54cm !important;   
+}
+
+/* Ensure all columns in Salary Form are visible */
+#employeeDataContainersalarySection td, #employeeDataContainersalarySection th {
+   display: table-cell !important;  
+      visibility: visible !important;  
+   height: 0.54cm !important;   
+   line-height: 0.54cm !important; 
+   padding: 0 !important;       
+   font-size: 15px;
+}
+
+#employeeDataContainersalarySection table {
+    outline: 1px solid blue !important;
+}
+
+#employeeDataContainersalarySection input,
+#employeeDataContainersalarySection label {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Set the table to RTL */
+table {
+    direction: rtl; /* This will flip the layout to RTL */
+}
+
+/* Align text and inputs for RTL */
+td {
+    text-align: right; /* Align table cell content to the right */
+}
+
+input {
+    direction: rtl; /* Set input text direction to RTL */
+    text-align: right; /* Align the text inside inputs to the right */
+    font-weight: bold;
+    width: 100%;
+    height: 100%;
+    font-size: 15px;
+   /* box-sizing: border-box;*/
+}
+
+/* Highlight focused input for better navigation */
+input:focus {
+    border: 2px solid blue;
+    background-color: #f0f8ff;
+}
+/* Button container styles */
+.button-container {
+    display: flex;
+    gap: 10px;
+}
+
+.button-container a {
+    text-decoration: none;
+}
+
+.button-container button {
+    font-weight: bold;
+    width: 4cm;
+    height: 0.5cm;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4CAF50;
+   # background-color: #45a049;
+    color: #your-text-color;
+}
+
+/* Style for radio buttons */
+input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    width: 1.3em;
+    height: 1.3em;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    outline: none;
+    box-shadow: 0 0 5px 0px yellow inset;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+    background-color: yellow;
+    box-shadow: 0 0 0 3px lightyellow inset;
+    background-image: radial-gradient(circle, black 50%, transparent 50%);
+}
+
+select {
+    width: 5em;
+    height: 2em;
+}
+
+/* Style for MSG Warning Over 42 Hours */
+#weekly-warning {
+  display: none;
+  background-color: #ffe5e5;
+  color: #900;
+  padding: 0.4rem;
+  margin: 0.5rem auto;
+  border: 2px solid #900;
+  max-width: 860px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  direction: rtl;
+  border-radius: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#weekly-warning .warning-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  margin: 2px 0;
+  background-color: #fff0f0;
+  border-radius: 3px;
+}
+
+.confirm-button {
+  background-color: #900;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 8px; /* push button to left side in RTL */
+}
+
+.confirm-button:hover {
+  background-color: #b00;
+}
+
+
+
+
+.confirm-button:hover {
+  background-color: #b00;
+}
+
+#windows-success-box {
+  background-color: #e6f4ea;
+  color: #155724;
+  border: 2px solid #28a745;
+}
+
+#weekly-warning button,
+#windows-success-box button {
+  margin-left: 0.8rem;
+  background-color: #900;
+  color: white;
+  border: none;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 0.3rem;
+  height: 18px;
+  line-height: 1;
+  transition: background-color 0.3s ease;
+}
+
+#weekly-warning button:hover,
+#windows-success-box button:hover {
+  background-color: #b30000;
+}
+
+.confirm-button {
+  height: 30px; /* taller button */
+  padding: 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  box-sizing: border-box;
+
+  /* Center text vertically and horizontally */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* === HIIDEN DISPLAY ROW ON SALARY === */
+.personal_only{
+  display: none;
+}
+
+.contract_only {
+  display: none;
+}
+
+.above_ceiling_only {
+  display: table-cell;
+}
+
+
+/* === PRINT STYLES === */
+@media print {
+    body {
+        background-color: white !important;
+        margin: 0;
+        padding: 0;
+        font-size: 10pt;
+        direction: rtl;
+    }
+
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Show only the salary section */
+    #employeeDataContainersalarySection,
+    #employeeDataContainersalarySection * {
+        visibility: visible;
+    }
+
+    /* Position salary section for A4 print */
+    #employeeDataContainersalarySection {
+        position: relative;
+        width: 190mm;        
+        /* remove min-height to avoid extra blank pages */
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+        background: white;        
+        page-break-after: avoid;  
+        page-break-before: avoid; 
+    }
+
+    /* Hide all controls and buttons */
+    .controls-row,
+    .back-button,
+    .delete-button,
+    .renew-button,
+    .action-button,
+    .print-button {
+        display: none !important;
+    }
+
+    /* Table formatting */
+    #employeeDataContainersalarySection table {
+        width: 100%;
+        border-collapse: collapse;
+        page-break-inside: avoid;
+        font-size: 10pt;
+    }
+
+    #employeeDataContainersalarySection th,
+    #employeeDataContainersalarySection td {
+        border: 1px solid #000;
+        padding: 2px 4px;
+        line-height: 1.2;
+        font-size: 10pt;
+        color: black;
+    }
+
+    #employeeDataContainersalarySection tr {
+        height: auto;
+    }
+
+    /* Headings and info inside salary section */
+    #employeeDataContainersalarySection h2 {
+        color: black;
+        font-size: 14pt;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    #employeeDataContainersalarySection .session-info {
+        font-size: 10pt;
+        color: black;
+        margin-bottom: 10px;
+    }
+
+    /* Page setup */
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+}
+
+
+/* === Scrool Down Button === */
+
+#backToTopBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 99;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;   /* reduced padding → half the height */
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;   /* makes text bold */
+  display: none;
+}
+
+#backToTopBtn:hover {
+  background-color: #0056b3;
+}

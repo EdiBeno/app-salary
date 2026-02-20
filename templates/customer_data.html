@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רשימת לקוחות</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='employee_data.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="column1"></div>
+        <div class="column2">
+            <h1 style="text-align: center;">רשימת לקוחות</h1>
+
+            <!-- Empty row after -->
+            <div style="height: 0.1cm;"></div>
+
+            <div style="display: flex; gap: 10px;">
+                <!-- Go to Main Page Button -->
+                <a href="{{ url_for('index') }}" style="text-decoration: none;">
+                    <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                        עבור לדף הראשי
+                    </button>
+                </a>
+
+        <!-- Go to Contact Form Page Button -->
+        <a href="{{ url_for('customer_form') }}" style="text-decoration: none;">
+            <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                חזור ללקוח
+            </button>
+        </a>
+
+                <!-- Clear Data Button -->
+                <button type="button" onclick="clearData()" style="font-weight: bold; width: 3cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+                    נקה מידע
+                </button>
+            </div>
+
+            <!-- Empty row after -->
+            <div style="height: 0.1cm;"></div>
+
+            <!-- Display saved data -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>תאריך</th>
+                        <th>שם הלקוח</th>
+                        <th>מספר זהות</th>
+                        <th>כתובת</th>
+                        <th>עיר</th>
+                        <th>מיקוד</th>
+                        <th>טלפון</th>
+                        <th>שווי ביגוד</th>
+                        <th>שווי רכב</th>
+                        <th>מייל</th>
+                        <th>תחילת עבודה</th>
+                        <th>מספר בנק</th>
+                        <th>מספר סניף</th>
+                        <th>חשבון בנק</th>
+                        <th>שווי ארוחת צהריים</th>
+                        <th>שווי טלפון נייד</th>
+                        <th>תעריף לשעה</th>
+                        <th>מספר עובד</th>
+                        <th>משכורת י"ג</th>
+                        <th>הודעה</th>
+                        <th>מחלקה עובד</th>
+                        <th>השכם העסקה %</th>
+                        <th>מצב משפחתי</th>
+                        <th>נקודות זיכוי מס</th>
+                        <th>קופת חולים</th>
+                        <th>ביטוח לאומי</th>
+                        <th>מס הכנסה</th>
+                        <th>סוג חוזה</th>
+                        <th>ילד נכה נק. זיכוי</th>
+                        <th>עדכן</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.date }}</td>
+                        <td>{{ customer.customer_name }}</td>
+                        <td>{{ customer.id_number }}</td>
+                        <td>{{ customer.address }}</td>
+                        <td>{{ customer.city }}</td>
+                        <td>{{ customer.postal_code }}</td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.clothing_value }}</td>
+                        <td>{{ customer.car_value }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.start_date }}</td>
+                        <td>{{ customer.bank_number }}</td>
+                        <td>{{ customer.branch_number }}</td>
+                        <td>{{ customer.account_number }}</td>
+                        <td>{{ customer.lunch_value }}</td>
+                        <td>{{ customer.mobile_value }}</td>
+                        <td>{{ customer.hourly_rate }}</td>
+                        <td>{{ customer.customer_number }}</td>
+                        <td>{{ customer.thirteenth_salary }}</td>
+                        <td>{{ customer.message }}</td>
+                        <td>{{ customer.work_apartment }}</td>
+                        <td>{{ customer.work_percent }}</td>
+                        <td>{{ customer.marital_status }}</td>
+                        <td>{{ customer.tax_point }}</td>
+                        <td>{{ customer.hospital }}</td>
+                        <td>{{ customer.social_number }}</td>
+                        <td>{{ customer.irs_status }}</td>
+                        <td>{{ customer.contract_status }}</td>
+                        <td>{{ customer.tax_point_child }}</td>
+                        <td><a href="{{ url_for('update_customer', customer_id=customer.id) }}">עדכן</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+        </div>
+    </div>
+</body>
+</html>

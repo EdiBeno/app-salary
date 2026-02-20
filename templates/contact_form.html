@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוכנה חישוב שכר</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='contact_form.css') }}">
+<script src="{{ url_for('static', filename='formulas.js') }}?v={{ time.time() }}" defer></script>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+            <h1 style="margin-left: 245px; text-align: center;">הוסף או עדכן איש קשר</h1>
+
+<form method="POST" action="{{ url_for('contact_form') }}" id="form-body">
+  <input type="hidden" name="form_type" value="contact_form">
+    <input type="hidden" id="employee_id" name="employee_id" value="{{ employee.employee_id if employee else '' }}">
+
+      <div class="form-container">
+         <div class="form-column">
+          <div class="form-row">
+
+    <label for="date" style="font-size: 1.2em; font-weight: bold; width: 1.8cm; height: 0.3cm;display: flex; align-items: center;">תאריך:</label>
+<input type="date" id="date" name="date" class="form-input" value="{{ employee.date if employee else '' }}" required style="width: 5.15cm; height: 0.3cm;">
+            </div>
+            <div class="form-row">
+                <label for="employee_name">שם העובד:</label>
+<input type="text" id="employee_name" name="employee_name" value="{{ employee.employee_name if employee else '' }}" style="font-size: 17px; width: 5.35cm;">
+            </div>
+            <div class="form-row">
+                <label for="id_number">מספר זהות:</label>
+                <input type="text" id="id_number" name="id_number" value="{{ employee.id_number if employee else '' }}" style="width: 5.25cm;">
+            </div>
+            <div class="form-row">
+                <label for="address">כתובת:</label>
+                <input type="text" id="address" name="address" value="{{ employee.address if employee else '' }}" style="font-size: 17px; width: 6.05cm;">
+            </div>
+
+<div class="form-row" style="display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
+    <label for="city" style="font-weight: bold; margin: 0;">עיר:</label>
+    <input type="text" id="city" name="city"
+           value="{{ employee.city if employee else '' }}"
+           style="font-size: 17px; width: 3.1cm; margin: 0;">
+
+    <label for="postal_code" style="font-weight: bold; margin: 0;">מיקוד:</label>
+    <input type="text" id="postal_code" name="postal_code"
+           value="{{ employee.postal_code if employee else '' }}"
+           style="font-size: 15px; width: 1.6cm; margin: 0;">
+</div>
+
+            <div class="form-row">
+                <label for="phone">טלפון:</label>
+                <input type="text" id="phone" name="phone" value="{{ employee.phone if employee else '' }}" style="width: 6.15cm;">
+            </div>
+            <div class="form-row">
+    <label for="date_of_birth" style="font-size: 1.2em; font-weight: bold; width: 2.6cm; height: 0.3cm;display: flex; align-items: center;">תאריך לידה:</label>
+<input type="date" id="date_of_birth" name="date_of_birth" value="{{ employee.date_of_birth if employee else '' }}" style="width: 4.85cm; height: 0.6cm; font-weight: bold; font-size: 1.3em;">
+            </div> 
+            <div class="form-row">
+                <label for="tax_point_child">ילד נכה נק. זיכוי:</label>
+                <input type="text" id="tax_point_child" name="tax_point_child" value="{{ employee.tax_point_child if employee else '' }}" style="width: 4.15cm;">
+            </div>
+        </div>
+
+            <div class="form-column">
+   
+           <div class="form-row">
+                <label for="clothing_value">שווי ביגוד:</label>
+<input type="text" id="clothing_value" name="clothing_value" value="{{ '{:,.2f}'.format(employee.clothing_value|float) if employee and employee.clothing_value else '' }}" style="width: 3.9cm;">
+            </div>
+            <div class="form-row">
+                <label for="cars_value">שווי רכב:</label>
+<input type="text" id="cars_value" name="cars_value"
+       value="{% if formatted_car_value %}{{ formatted_car_value.replace('₪', '') }}{% elif employee and employee.cars_value %}{{ '{:,.2f}'.format(employee.cars_value|float) }}{% else %}{{ '' }}{% endif %}"
+       style="width: 4.2cm;">
+            </div>
+            <div class="form-row">
+                <label for="email">מייל:</label>
+                <input type="text" id="email" name="email" value="{{ employee.email if employee else '' }}" style="width: 5.05cm;">
+            </div>
+            <div class="form-row">
+    <label for="start_date" style="font-size: 1.2em; font-weight: bold; width: 2.6cm; height: 0.3cm;display: flex; align-items: center;">תחילת עבודה:</label>
+<input type="date" id="start_date" name="start_date" value="{{ employee.start_date if employee else '' }}" style="width: 3.5cm; height: 0.6cm; font-weight: bold; font-size: 1.3em;">
+            </div>
+            <div class="form-row">
+                <label for="bank_number">מספר בנק:</label>
+                <input type="text" id="bank_number" name="bank_number" value="{{ employee.bank_number if employee else '' }}" style="width: 4.1cm;">
+            </div>
+            <div class="form-row">
+                <label for="branch_number">מספר סניף:</label>
+<input type="text" id="branch_number" name="branch_number" value="{{ employee.branch_number if employee else '' }}" style="width: 3.9cm;">
+            </div>
+            <div class="form-row">
+                <label for="account_number">חשבון בנק:</label>
+                <input type="text" id="account_number" name="account_number" value="{{ employee.account_number if employee else '' }}" style="width: 3.9cm;">
+            </div>
+            <div class="form-row">
+                <label for="tax_credit_points">נקודות זיכוי מס:</label>
+                <input type="text" id="tax_credit_points" name="tax_credit_points" value="{{ employee.tax_credit_points if employee else '' }}" style="width: 3cm;">
+            </div>
+        </div>
+ 
+           <div class="form-column">
+
+            <div class="form-row">
+                <label for="monthly_city_tax_tops">סכום זיכוי ישוב חודשי:</label>
+<input type="text" id="monthly_city_tax_tops" name="monthly_city_tax_tops"
+       value="{% if formatted_monthly_city_top_tax %}{{ formatted_monthly_city_top_tax.replace('₪', '') }}{% elif employee and employee.monthly_city_tax_tops %}{{ '{:,.2f}'.format(employee.monthly_city_tax_tops|float) }}{% else %}{{ '' }}{% endif %}"
+       style="width: 1.95cm;">
+            </div>
+            <div class="form-row">
+    <label for="city_value_percentage" style="font-size: 1.2em; font-weight: bold; width: 4.4cm; height: 0.3cm;display: flex; align-items: center;">אחוז זיכוי ישוב מיוחד:</label>
+<input type="text" id="city_value_percentage" name="city_value_percentage"
+value="{% if city_data and city_data['שיעור 2024'] %}{{ city_data['שיעור 2024'].replace('%', '') }}{% elif employee and employee.city_value_percentage %}{{ '{:.2f}'.format(employee.city_value_percentage) }}{% else %}{{ '' }}{% endif %}"
+       style="width: 1.9cm; height: 0.5cm; font-weight: bold; font-size: 0.9em;">
+            </div> 
+            <div class="form-row">
+                <label for="lunch_value">שווי ארוחת צהריים:</label>
+<input type="text" id="lunch_value" name="lunch_value" value="{{ '{:,.2f}'.format(employee.lunch_value|float) if employee and employee.lunch_value else '' }}" style="width: 2.55cm;">
+            </div>
+            <div class="form-row">
+                <label for="mobile_value">שווי טלפון נייד:</label>
+<input type="text" id="mobile_value" name="mobile_value" value="{{ '{:,.2f}'.format(employee.mobile_value|float) if employee and employee.mobile_value else '' }}" style="width: 3.3cm;">
+            </div>
+            <div class="form-row">
+                <label for="hourly_rate">תעריף לשעה:</label>
+<input type="text" id="hourly_rate" name="hourly_rate" value="{{ '{:,.2f}'.format(employee.hourly_rate|float) if employee and employee.hourly_rate else '' }}" style="width: 3.75cm;">
+            </div>
+            <div class="form-row">
+                <label for="employee_number">מספר עובד:</label>
+<input type="text" id="employee_number" name="employee_number" value="{{ employee.employee_number if employee else '' }}" style="width: 4.15cm;">
+            </div>
+            <div class="form-row">
+                <label for="thirteenth_salary">משכורת י"ג:</label>
+<input type="text" id="thirteenth_salary" name="thirteenth_salary" value="{{ '{:,.2f}'.format(employee.thirteenth_salary|float) if employee and employee.thirteenth_salary else '' }}" style="width: 3.9cm;">
+            </div>
+            <div class="form-row">
+                <label for="work_percent">הסכם העסקה:</label>
+                <input type="text" id="work_percent" name="work_percent" value="{{ employee.work_percent if employee else '' }}" style="width: 3.8cm;">
+            </div>
+        </div>
+
+                <div class="form-row" style="height: 1.2cm;">
+
+            <div class="form-row">
+<div class="form-row" style="display: flex; flex-direction: column; margin-bottom: 0.001em;">
+        <label for="message" style="font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">הודעה:</label>
+        <textarea id="message" name="message" rows="5" style="width: 14.15cm; height: 1.5cm; font-size: 21px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+{{ employee.message if employee else '' }}
+        </textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+                       <!--  Combobox -->
+
+<div class="form-container">
+    <div class="form-column">
+        <!-- Work Apartment -->
+        <div class="form-row">
+            <label for="work_apartment">מחלקה עובד:</label>
+            <select id="work_apartment" name="work_apartment" class="form-select" style="width: 4.25cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="" {% if not employee.work_apartment %}selected{% endif %}></option> <!-- Empty first option -->
+                <option value="נהג/ת" {% if employee.work_apartment == "נהג/ת" %}selected{% endif %}>נהג/ת</option>
+                <option value="מזכיר/ה" {% if employee.work_apartment == "מזכיר/ה" %}selected{% endif %}>מזכיר/ה</option>
+                <option value="מנהל/ת חשבונות" {% if employee.work_apartment == "מנהל/ת חשבונות" %}selected{% endif %}>מנהל/ת חשבונות</option>
+                <option value="אחזקה" {% if employee.work_apartment == "אחזקה" %}selected{% endif %}>אחזקה</option>
+                <option value="נקיון" {% if employee.work_apartment == "נקיון" %}selected{% endif %}>נקיון</option>
+                <option value="מיחשוב" {% if employee.work_apartment == "מיחשוב" %}selected{% endif %}>מיחשוב</option>
+            </select>
+        </div>
+
+        <!-- Marital Status -->
+        <div class="form-row">
+            <label for="marital_status">מצב משפחתי:</label>
+            <select id="marital_status" name="marital_status" class="form-select" style="width: 4.1cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="" {% if not employee.marital_status %}selected{% endif %}></option> <!-- Empty first option -->
+                <option value="רווק/ה" {% if employee.marital_status == "רווק/ה" %}selected{% endif %}>רווק/ה</option>
+                <option value="נשוי/נשואה" {% if employee.marital_status == "נשוי/נשואה" %}selected{% endif %}>נשוי/נשואה</option>
+                <option value="גרוש/ה" {% if employee.marital_status == "גרוש/ה" %}selected{% endif %}>גרוש/ה</option>
+                <option value="אלמן/ה" {% if employee.marital_status == "אלמן/ה" %}selected{% endif %}>אלמן/ה</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-column">
+        <!-- Hospital -->
+        <div class="form-row">
+            <label for="hospital">קופת חולים:</label>
+            <select id="hospital" name="hospital" class="form-select" style="width: 4.3cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="" {% if not employee.hospital %}selected{% endif %}></option> <!-- Empty first option -->
+                <option value="כללית" {% if employee.hospital == "כללית" %}selected{% endif %}>כללית</option>
+                <option value="מכבי" {% if employee.hospital == "מכבי" %}selected{% endif %}>מכבי</option>
+                <option value="מאוחדת" {% if employee.hospital == "מאוחדת" %}selected{% endif %}>מאוחדת</option>
+            </select>
+        </div>
+
+        <!-- Social Number -->
+        <div class="form-row">
+            <label for="social_number">ביטוח לאומי:</label>
+            <select id="social_number" name="social_number" class="form-select" style="width: 4.1cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="" {% if not employee.social_number %}selected{% endif %}></option> <!-- Empty first option -->
+                <option value="מלא" {% if employee.social_number == "מלא" %}selected{% endif %}>מלא</option>
+                <option value="חלקי" {% if employee.social_number == "חלקי" %}selected{% endif %}>חלקי</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-column">
+        <!-- IRS Status -->
+        <div class="form-row">
+            <label for="irs_status">מס הכנסה:</label>
+            <select id="irs_status" name="irs_status" class="form-select" style="width: 4.6cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="" {% if not employee.irs_status %}selected{% endif %}></option> <!-- Empty first option -->
+                <option value="יחיד" {% if employee.irs_status == "יחיד" %}selected{% endif %}>יחיד</option>
+                <option value="בע\"מ" {% if employee.irs_status == "בע\"מ" %}selected{% endif %}>בע\"מ</option>
+                <option value="חברה" {% if employee.irs_status == "חברה" %}selected{% endif %}>חברה</option>
+            </select>
+        </div>
+
+        <!-- Contract Status -->
+        <div class="form-row">
+            <label for="contract_status">סוג חוזה:</label>
+            <select id="contract_status" name="contract_status" class="form-select" style="width: 4.85cm; display: flex; align-items: center; height: 0.7cm;">
+                <option value="" {% if not employee.contract_status %}selected{% endif %}></option> <!-- Empty first option -->
+                <option value="אישי" {% if employee.contract_status == "אישי" %}selected{% endif %}>אישי</option>
+                <option value="העסקה" {% if employee.contract_status == "העסקה" %}selected{% endif %}>העסקה</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+                <div class="form-row" style="height: 0.01cm;">
+
+    <!-- Button Section -->
+
+  <div style="display: flex; gap: 29px; margin-top: 1px; align-items: center;">
+
+    <!-- Save Data Button -->
+    <form action="{{ url_for('contact_form') }}" method="POST">
+    <button type="submit" style="font-weight: bold; width: 3cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+           שמירת נתונים
+        </button>
+    </form>
+
+    <!-- Go to Main Page Button -->
+    <a href="{{ url_for('index') }}" style="text-decoration: none;">
+      <button type="button" style="font-weight: bold; width: 3.6cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+        עבור לדף הראשי
+      </button>
+    </a>
+
+    <!-- Search Form for Employee  -->
+<form method="POST" action="{{ url_for('search_employee') }}" style="display: flex; align-items: center;">
+    <label for="search_name" style="font-weight: bold; width: 3.5cm; height: 0.5cm; font-size: 19px; display: flex; font-weight: bold; align-items: center; margin-right: 19px;">חיפוש שם עובדים:</label>
+<select id="search_name" name="search_name" style="margin-right: 10px; width: 200px; font-size: 16px;font-weight: bold; height: 24px; line-height: 30px;">
+        <option value="">בחר שם עובד</option>
+        {% for employee in all_employees %}
+        <option value="{{ employee.employee_name }}"
+            {% if request.form.get('search_name') == employee.employee_name %}selected{% endif %}>
+            {{ employee.employee_name }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" style="font-weight: bold; width: 2cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+        חיפוש
+    </button>
+</form>
+
+    <!-- Clear Data Button for Employee  -->
+<form method="POST" action="{{ url_for('clear_search_results_employee') }}" style="display: flex; align-items: center;">
+    <input type="hidden" name="form_type" value="clear_contact_form">
+    <button type="submit" style="font-weight: bold; width: 2.8cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
+        נקה מידע
+    </button>
+</form>
+
+<!-- Go to Employee Data Page Button -->
+<a href="{{ url_for('contact_data') }}" style="text-decoration: none;">
+    <button type="button" style="font-weight: bold; width: 3.3cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+            מידע עובדים
+        </button>
+    </a>
+
+<!-- Tax Credit Simulator -->
+<a href="{{ url_for('tax_credit_simulator') }}" style="text-decoration: none;">
+    <button type="button" style="font-weight: bold; width: 3.6cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+                חשב נקודות זיכוי
+        </button>
+    </a>
+
+<!-- Go to Employee Data Page Button -->
+<a href="{{ url_for('contact_form') }}" style="text-decoration: none;">
+    <button type="submit" id="update-button" style="font-weight: bold; width: 3.3cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+        שלח טופס
+    </button>
+  </a>
+            </div>
+        </div>
+    </div>
+
+                       <!-- Car Form Section -->
+                <div class="form-row" style="height: 0.01cm;">
+    </div>
+    <h2 style="font-size: 20px; text-align: center; margin-left: 270px; background-color: #ADD8E6;">עדכון שווי רכב צמוד</h2>
+    <div class="container">
+        <form method="POST" action="/contact_form" style="display:flex; flex-wrap: wrap; width: 100%;">
+  <input type="hidden" name="form_type" value="car_form">
+
+    <!-- Main Car Form -->
+<div class="form-group">
+    <label for="car_year" style="width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">שנת רישום:</label>
+    <input type="text" id="car_year" name="car_year" placeholder="שנת רישום" value="{{ car_form_fields['car_year'] }}" style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.001cm; height: 0.4cm; font-size: 15px;">
+</div>
+<div class="form-group">
+    <label for="car_model" style="width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">קוד תוצר:</label>
+    <input type="text" id="car_model" name="car_model" placeholder="קוד תוצר" value="{{ car_form_fields['car_model'] }}" style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.55cm; height: 0.4cm; font-size: 15px;">
+</div>
+<div class="form-group">
+    <label for="car_type" style="width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">קוד דגם:</label>
+    <input type="text" id="car_type" name="car_type" placeholder="קוד דגם" value="{{ car_form_fields['car_type'] }}" style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.55cm; height: 0.4cm; font-size: 15px;">
+</div>
+<div class="form-group">
+    <label for="car_value" style="width: 2.8cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">שווי רכב צמוד:</label>
+    <input type="text" id="car_value" name="car_value" value="{{ car_data['שווי שימוש'] if car_data else '' }}" readonly style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.35cm; height: 0.4cm; font-size: 15px;">
+</div>
+
+            <!-- Car Button Section -->
+<div style="display: flex; gap: 10px; margin-top: 0.5px; align-items: center;">
+<!-- Search Car Button -->
+<form method="POST" action="/contact_form" style="margin: 0;">
+  <input type="hidden" name="form_type" value="car_form">
+  <button 
+    type="submit" 
+    style="font-weight: bold; width: 2.6cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+    חיפוש רכב
+  </button>
+</form>
+
+<!-- Clear Car Button -->
+<form method="POST" action="/contact_form" style="margin: 0;">
+  <input type="hidden" name="form_type" value="clear_car">
+  <button 
+    type="submit" 
+    style="font-weight: bold; width: 2.6cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+    ניקוי רכב
+    </button>
+     </form>
+    </div>
+
+                       <!-- City Form Section -->
+    </div>
+    <h2 style="font-size: 20px; text-align: center; margin-left: 270px; background-color: #ADD8E6;">עידכון זיכוי ישוב מיוחד</h2>
+    <div class="container">
+        <form method="post" action="/contact_form" style="display:flex; flex-wrap: wrap; width: 100%;">
+  <input type="hidden" name="form_type" value="city_form">
+
+    <!-- Main City Form -->
+<div class="form-group">
+    <label for="city_name" style="width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">שם יישוב:</label>
+    <input type="text" id="city_name" name="city_name" placeholder="שם יישוב" value="{{ city_form_fields['city_name'] }}" style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.1cm; height: 0.4cm; font-size: 17px;">
+</div>
+<div class="form-group">
+    <label for="city_value" style="width: 3cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">זיכוי ישוב מיוחד:</label>
+    <input type="text" id="city_value" name="city_value" value="{{ city_data['שיעור 2024'] if city_data else '' }}" readonly style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.1cm; height: 0.4cm; font-size: 15px;">
+</div>
+<div class="form-group">
+    <label for="city_sign" style="width: 2.4cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">סמל היישוב:</label>
+    <input type="text" id="city_sign" name="city_sign" value="{{ city_data['סמל היישוב'] if city_data else '' }}" readonly style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.1cm; height: 0.4cm; font-size: 15px;">
+</div>
+<div class="form-group">
+    <label for="city_top_tax" style="width: 2.1cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">סכום זיכוי:</label>
+    <input type="text" id="city_top_tax" name="city_top_tax" value="{{ city_data['סכום זיכוי'] if city_data else '' }}" readonly style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-right: 0.1cm; height: 0.4cm; font-size: 15px;">
+</div>
+<div class="form-group">
+    <label for="monthly_city_top_tax" style="width: 3.1cm; margin-right: 0.5cm; font-weight: bold; text-align: center; white-space: nowrap; background-color: lightyellow; height: 0.4cm; font-size: 19px;">סכום זיכוי חודשי:</label>
+    <input type="text" id="monthly_city_top_tax" name="monthly_city_top_tax" value="{{ city_data['סכום זיכוי חודשי'] if city_data else '' }}" readonly style="width: 2.9cm; font-weight: bold; text-align: center; white-space: nowrap; margin-left: 0.1cm; height: 0.4cm; font-size: 15px;">
+</div>
+
+            <!-- City Button Section -->
+<div style="display: flex; gap: 10px; margin-top: 0.5px; align-items: center;">
+<!-- Search City Button -->
+<form method="POST" action="/contact_form" style="margin: 0;">
+  <input type="hidden" name="form_type" value="city_form">
+  <button 
+    type="submit" 
+    style="font-weight: bold; width: 2.6cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+    חיפוש עיר
+  </button>
+</form>
+
+<!-- Clear City Button -->
+<form method="POST" action="/contact_form" style="margin: 0;">
+  <input type="hidden" name="form_type" value="clear_city_form">
+  <button 
+    type="submit" 
+    style="font-weight: bold; width: 2.6cm; height: 0.5cm; font-size: 17px; display: flex; align-items: center; justify-content: center;">
+      ניקוי עיר
+    </button>
+     </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formBody = document.getElementById('form-body');
+    if (formBody) {
+        const allFields = Array.from(formBody.querySelectorAll('input, textarea, select'));
+
+        // ניווט עם חצים
+        formBody.addEventListener('keydown', function (event) {
+            const key = event.key;
+            const current = event.target;
+            const index = allFields.indexOf(current);
+
+            if (index === -1) return;
+
+            if (key === 'ArrowDown' && index < allFields.length - 1) {
+                allFields[index + 1].focus();
+                event.preventDefault();
+            }
+            if (key === 'ArrowUp' && index > 0) {
+                allFields[index - 1].focus();
+                event.preventDefault();
+            }
+        });
+
+        // הדגשה כששדה נבחר
+        allFields.forEach(field => {
+            field.addEventListener('focus', () => {
+                field.style.backgroundColor = '#e6f7ff';
+                field.style.outline = '1px solid #007bff';
+            });
+            field.addEventListener('blur', () => {
+                field.style.backgroundColor = '';
+                field.style.outline = '';
+            });
+        });
+    }
+});
+</script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

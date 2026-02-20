@@ -1,0 +1,344 @@
+@media screen and (max-width: 480px) {
+    /*  כותרת - ביטול שוליים ומרכוז */
+    h1 {
+        margin-left: 0 !important;
+        text-align: center !important;
+        font-size: 1.5em !important;
+        width: 100% !important;
+    }
+
+    /*  מבנה כללי - הפיכה לטור אחד (Vertical) */
+    .form-container, 
+    #form-body, 
+    .form-row, 
+    div[style*="display: flex"] {
+        display: flex !important;
+        flex-direction: column !important; /* אחד מתחת לשני */
+        align-items: center !important;   /* ממרכז את התוכן */
+        width: 100% !important;
+        height: auto !important;          
+        gap: 10px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .form-column {
+        width: 90% !important;
+        display: block !important;
+    }
+
+    /*  תוויות (Labels) - החזרת כל הלייבלים ועיצובם לימין */
+    label {
+        width: 280px !important; 
+        display: block !important;
+        margin-bottom: 1px !important;
+        text-align: right !important;
+        font-weight: bold !important;
+        height: auto !important;
+    }
+
+    /*  שדות מילוי (Inputs/Select) - גודל אחיד וממורכז */
+    input, 
+    select, 
+    textarea, 
+    input[type="date"],
+    .form-select {
+        width: 280px !important;      
+        height: 45px !important;       
+        max-width: 280px !important;
+        margin: 5px auto !important;   
+        box-sizing: border-box !important;
+        font-size: 16px !important;
+        display: block !important;
+    }
+
+    /*  כפתורים - גודל אחיד בדיוק כמו השדות */
+    button, 
+    input[type="submit"], 
+    .form-row button,
+    a button {
+        width: 280px !important;       
+        height: 48px !important;       
+        margin: 10px auto !important;  
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background-color: #007bff !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 17px !important;
+        border-radius: 6px !important;
+        border: none !important;
+        cursor: pointer !important;
+        position: static !important;
+        transform: none !important;
+    }
+
+  /* 2. מחיקת הלייבל "חיפוש שם עובדים" בלבד */
+    label[for="search_name"], 
+    label[style*="width: 1.8cm"],
+    div[style*="gap: 29px"] label {
+        display: none !important;
+  }
+
+    /*  הפרדת שורת החיפוש - הכפתור יורד מתחת לתיבה */
+    div[style*="display: flex; gap: 29px"] {
+        display: block !important; 
+        width: 90% !important;
+        text-align: center !important;
+    }
+
+    select#employee_name {
+        display: block !important;
+        width: 280px !important;
+        margin: 10px auto !important;
+        clear: both !important;
+    }
+
+
+    /*  תיקון טקסטים ארוכים וביטול גבהים קבועים */
+    span, div {
+        white-space: normal !important; 
+        text-align: center !important;
+    }
+
+    div[style*="height: 0.01cm"], 
+    div[style*="height: 1.2cm"],
+    div[style*="height: 0.3cm"] {
+        height: auto !important;
+    }
+}
+
+
+/* בסיס עיצוב לאפליקציה בעברית */
+body {
+  direction: rtl;
+  text-align: right;
+  margin: auto;
+  max-width: 96vw;
+  overflow-x: hidden;
+}
+
+/* עיצוב למסכים קטנים (ניידים) */
+@media screen and (max-width: 767px) {
+  body {
+    font-size: 16px;
+    padding: 1rem;
+  }
+}
+
+/* Table styles עיצוב טבלה בסיסי  */
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 17px;
+}
+
+.table-box td, .small-row td {
+    width: 2.5cm;
+}
+
+h1 {
+    margin: 0; /* Remove default margin */
+    height: 50px; /* Set a specific height for the heading */
+    display: flex;
+    align-items: center; /* Center the content vertically */
+    justify-content: center; /* Center the content horizontally */
+}
+
+input:focus, textarea:focus, select:focus {
+    background-color: #e6f7ff;
+    outline: 1px solid #007bff;
+
+}
+.bold-header, .bold-button {
+    font-weight: bold;
+}
+
+.wrap-text {
+    white-space: nowrap;
+}
+
+.table-box {
+    width: 100%;
+}
+
+.blue {
+    background-color: blue;
+}
+
+.gray {
+    background-color: gray;
+}
+
+.yellow {
+    background-color: yellow;
+}
+
+.header {
+    background: linear-gradient(to right, yellow, darkblue);
+    color: black;
+    padding: 10px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.table-header {
+    background-color: lightblue;
+    color: black;
+    font-weight: bold;
+    text-align: center;
+}
+
+.table-box th {
+    height: 0.6cm;
+}
+
+.row-height {
+    height: 0.2cm;
+}
+
+/* Body margin */
+body {
+    background-color: #f9f9f9;
+    margin-right: 10%;
+    margin-left: 5%;
+    justify-content: center; /* מרכז את התוכן אופקית */
+}
+
+/* Form container styles */
+.form-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(6, auto);
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+
+           /* width: 100%; /* אתה יכול לשנות את הרוחב לפי הצורך */
+           /* padding: 20px;*/
+           /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);*/
+           /* border-radius: 8px;*/
+}
+
+/* Form column and row styles */
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    direction: rtl;
+}
+
+/* Form label and input styles */
+.form-label {
+    background-color: lightblue;
+    text-align: right;
+    padding: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    outline: 1px solid black;
+    height: 0.3cm;
+    width: 123px;
+    margin-left: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-input, .form-select {
+    width: 200px;
+    padding: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    height: 0.5cm;
+    margin-right: 10px;
+}
+
+label {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.table-box {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.form-select {
+    font-size: 0.9em;
+    height: 0.7cm;
+    display: flex;
+    align-items: center;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="email"],
+textarea {
+    height: 0.5cm;
+    font-weight: bold;
+}
+
+textarea.form-input {
+    height: 100px;
+}
+
+.form-row::after {
+    content: "";
+    display: block;
+    height: 10px;
+}
+
+/* Button container styles */
+.button-container {
+    display: flex;
+    gap: 10px;
+}
+
+.button-container a {
+    text-decoration: none;
+}
+
+.button-container button {
+    font-weight: bold;
+    width: 4cm;
+    height: 0.5cm;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4CAF50;
+   # background-color: #45a049;
+    color: #your-text-color;
+}
+
+/* Style for radio buttons */
+input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    width: 1.3em;
+    height: 1.3em;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    outline: none;
+    box-shadow: 0 0 5px 0px yellow inset;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+    background-color: yellow;
+    box-shadow: 0 0 0 3px lightyellow inset;
+    background-image: radial-gradient(circle, black 50%, transparent 50%);
+}
+
+select {
+    width: 5em;
+    height: 2em;
+}
+

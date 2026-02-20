@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>כניסה למערכת</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #0d1117, #1f6feb);
+        background-size: 400% 400%;
+        animation: flashBlue 12s ease infinite;
+        color: #c9d1d9;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    @keyframes flashBlue {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .gradient-b {
+        background: linear-gradient(90deg, #22d3ee, #86efac, #fde68a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: inline-block;
+    }
+
+    /* Container */
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+        margin-top: 20px;
+    }
+
+    /* TOP LOGO — BENO */
+    .beno-letter {
+        font-size: 90px;
+        line-height: 90px;
+        font-weight: 900;
+        display: inline-flex;
+        align-items: center;
+        color: #22d3ee;
+    }
+
+    .beno-circle {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        border: 5px solid #22d3ee;
+        overflow: hidden;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        transform: translateY(+6px);
+    }
+
+    .beno-circle img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+
+    /* BOTTOM LOGO — BE Number One (UNCHANGED) */
+    .logo-text {
+        font-size: 46px;
+        line-height: 46px;
+        height: 46px;
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
+        font-weight: 900;
+    }
+
+    .logo-circle {
+        width: 37px;
+        height: 37px;
+        border-radius: 50%;
+        border: 3px solid #22d3ee;
+        overflow: hidden;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        transform: translateY(+3px);
+    }
+
+    .logo-circle img {
+        width: 95%;
+        height: 95%;
+        object-fit: cover;
+    }
+
+
+    /* PHONE */
+    @media (max-width: 480px) {
+    /* Bottom logo circle */
+    .logo-circle {
+        width: 32px !important;
+        height: 32px !important;
+        border-width: 3px !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* TOP BENO circle */
+    .beno-circle {
+        width: 54px !important;
+        height: 54px !important;
+        transform: translateY(-2px) !important;  
+    }
+
+    /* TOP BENO letters */
+    .beno-letter {
+        font-size: 72px !important;   
+        line-height: 72px !important;
+        }
+    }
+
+</style>
+
+<body class="flex items-center justify-center min-h-screen bg-gray-900 text-gray-200 p-4">
+
+  <!-- 🔹 Video Trigger Box -->
+  <div id="videoBox" onclick="openVideo()" style="
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #1e1e1e;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: sans-serif;
+    box-shadow:
+      0 0 30px rgba(255, 255, 255, 0.9),
+      0 0 60px rgba(255, 255, 255, 0.6),
+      0 0 90px rgba(255, 255, 255, 0.3);
+  ">
+    🎥 צפייה בסרטון לדוגמא
+  </div>
+
+  <!-- 🔹 Video Modal -->
+  <div id="videoModal" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-color: rgba(0,0,0,0.95);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  ">
+    <div style="position: relative; width: 90%; max-width: 900px; margin: auto;">
+      <video id="demoVideo" controls autoplay style="width: 100%; border-radius: 10px;">
+        <source src="/static/video/sample-demo.mp4" type="video/mp4">
+        הדפדפן שלך לא תומך בתגית וידאו.
+      </video>
+
+      <button onclick="closeVideo()" style="
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: #fff;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 700;
+        color: #222;
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+      ">סגור</button>
+
+      <button onclick="launchFullscreen()" style="
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #fff;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 700;
+        color: #222;
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+      ">מסך מלא</button>
+    </div>
+  </div>
+
+  <!-- 🔹 LOGIN CONTAINER -->
+  <div class="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center space-y-6">
+
+    <!-- TOP TITLE -->
+
+<h1 dir="ltr" class="logo-container">
+  <span class="beno-letter gradient-b">B</span>
+  <span class="beno-letter gradient-b">E</span>
+  <span class="beno-letter gradient-b">N</span>
+  <span class="beno-circle">
+    <img src="/static/img/tiger.jpg" alt="O">
+  </span>
+</h1>
+
+    <h1 dir="ltr" class="text-cyan-400 text-lg md:text-2xl font-bold">
+      Accounting Management AI
+    </h1>
+
+    <!-- 🔹 Tabs -->
+    <div class="flex justify-center mb-6">
+      <button id="login-tab"
+        class="px-6 py-2 text-lg font-semibold rounded-l-lg transition-all duration-300 bg-indigo-600 text-white shadow-lg">
+        התחבר
+      </button>
+
+      <button id="register-tab"
+        class="px-6 py-2 text-lg font-semibold rounded-r-lg transition-all duration-300 bg-gray-700 text-gray-400">
+        הירשם
+      </button>
+    </div>
+
+    <!-- Form Title -->
+    <h2 id="form-title" class="text-3xl font-extrabold text-center text-white mb-6">
+      התחבר לחשבונך
+    </h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div id="flash-messages" class="mb-6 space-y-2">
+      {% for category, message in messages %}
+      <div class="p-3 rounded-lg text-sm text-center font-medium
+        {% if category == 'success' %} bg-green-700 text-green-200
+        {% elif category == 'danger' or category == 'warning' %} bg-red-700 text-red-200
+        {% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- 🔹 Auth Form -->
+    <form id="auth-form" method="POST" action="{{ url_for('login') }}" class="space-y-6 text-right">
+
+      <!-- Username (Register Only) -->
+      <div id="username-field">
+        <label for="username" class="block text-sm font-medium text-gray-400 mb-1">שם משתמש</label>
+        <input type="text" name="username" id="username"
+          class="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-indigo-500 text-right"
+          placeholder="הכנס שם משתמש" />
+      </div>
+
+      <!-- Email Normal -->
+      <div id="email-normal">
+        <label for="email">כתובת אימייל</label>
+        <input type="email" name="email" id="email"
+          class="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+          placeholder="name@example.com" />
+      </div>
+
+      <!-- Email Employee -->
+      <div id="email-employee" style="display:none;">
+        <label for="employee_email">כתובת אימייל</label>
+        <input type="text" name="employee_email" id="employee_email"
+          inputmode="email" autocomplete="off"
+          class="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+          placeholder="name@example.com" />
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-400 mb-1">סיסמה</label>
+        <input type="password" name="password" id="password" required
+          class="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-indigo-500 text-right"
+          placeholder="••••••••" />
+      </div>
+
+      <!-- Role -->
+      <div>
+        <label for="role" class="block text-sm font-medium text-gray-400 mb-1">סוג משתמש</label>
+        <select name="role" id="role"
+          class="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-indigo-500 text-right">
+          <option value="customer">לקוח</option>
+          <option value="employee">עובד</option>
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <button id="submit-btn" type="submit"
+        class="w-full py-2 px-4 rounded-lg text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500">
+        התחבר
+      </button>
+
+    </form>
+
+    <!-- Hebrew Subtitle -->
+    <h2 dir="rtl" class="text-cyan-400 text-lg md:text-2xl font-bold">
+      ניהול חשבונאות חכמה
+    </h2>
+
+    <!-- Bottom Title -->
+
+<h1 dir="ltr" class="flex items-center justify-center gap-4 flex-nowrap">
+
+  <span class="logo-text gradient-b">BE</span>
+  <span class="logo-text gradient-b">Number</span>
+
+  <span class="flex items-center gap-0">
+    <span class="logo-circle">
+      <img src="/static/img/tiger.jpg" alt="O">
+    </span>
+    <span class="logo-text gradient-b">ne</span>
+  </span>
+
+</h1>
+
+</div> 
+
+  <!-- 🔹 Scripts -->
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  // -------------------------
+  // ELEMENTS
+  // -------------------------
+  const loginTab = document.getElementById('login-tab');
+  const registerTab = document.getElementById('register-tab');
+  const formTitle = document.getElementById('form-title');
+  const authForm = document.getElementById('auth-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const usernameField = document.getElementById('username-field');
+  const roleSelect = document.getElementById("role");
+
+  // -------------------------
+  // LOGIN / REGISTER MODE
+  // -------------------------
+  function setFormMode(isLoginMode) {
+    if (isLoginMode) {
+      loginTab.classList.add('bg-indigo-600', 'text-white', 'shadow-lg');
+      loginTab.classList.remove('bg-gray-700', 'text-gray-400');
+      registerTab.classList.add('bg-gray-700', 'text-gray-400');
+      registerTab.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg');
+
+      formTitle.textContent = 'התחבר לחשבונך';
+      submitBtn.textContent = 'התחבר';
+      authForm.action = "{{ url_for('login') }}";
+      usernameField.style.display = 'none';
+
+    } else {
+      registerTab.classList.add('bg-indigo-600', 'text-white', 'shadow-lg');
+      registerTab.classList.remove('bg-gray-700', 'text-gray-400');
+      loginTab.classList.add('bg-gray-700', 'text-gray-400');
+      loginTab.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg');
+
+      formTitle.textContent = 'צור חשבון חדש';
+      submitBtn.textContent = 'הירשם';
+      authForm.action = "{{ url_for('register') }}";
+      usernameField.style.display = 'block';
+    }
+  }
+
+  loginTab.addEventListener('click', () => setFormMode(true));
+  registerTab.addEventListener('click', () => setFormMode(false));
+  setFormMode(true);
+
+  // -------------------------
+  // ROLE SWITCH
+  // -------------------------
+  roleSelect.addEventListener("change", function() {
+    const normal = document.getElementById("email-normal");
+    const employee = document.getElementById("email-employee");
+
+    if (this.value === "employee") {
+      normal.style.display = "none";
+      employee.style.display = "block";
+    } else {
+      normal.style.display = "block";
+      employee.style.display = "none";
+    }
+  });
+
+  // -------------------------
+  // KEYBOARD NAVIGATION (WORKS IN BOTH MODES)
+  // -------------------------
+  document.addEventListener('keydown', function(e) {
+
+    // לוקחים רק inputs גלויים — זה מה שמתקן את הבאג
+    const inputs = Array.from(
+      document.querySelectorAll('#auth-form input:not([type=hidden]):not([disabled])')
+    ).filter(el => el.offsetParent !== null); // ← רק גלויים
+
+    const focusedIndex = inputs.indexOf(document.activeElement);
+    if (focusedIndex === -1) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      inputs[(focusedIndex + 1) % inputs.length].focus();
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      inputs[(focusedIndex - 1 + inputs.length) % inputs.length].focus();
+    }
+  });
+
+  // -------------------------
+  // VIDEO CONTROLS
+  // -------------------------
+  window.openVideo = function() {
+    document.getElementById('videoModal').style.display = 'flex';
+  };
+
+  window.closeVideo = function() {
+    document.getElementById('videoModal').style.display = 'none';
+  };
+
+  window.launchFullscreen = function() {
+    const video = document.getElementById('demoVideo');
+    if (video.requestFullscreen) video.requestFullscreen();
+    else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+    else if (video.msRequestFullscreen) video.msRequestFullscreen();
+  };
+
+});
+</script>
+
+  <!-- Disable DevTools -->
+  <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>

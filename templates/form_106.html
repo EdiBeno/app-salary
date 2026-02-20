@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>טופס 106 - דו"ח שנתי לעובד</title>
+<script src="{{ url_for('static', filename='formulas.js') }}?v={{ time.time() }}" defer></script>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <style>
+.form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    direction: rtl;
+    width: 100%;
+    padding-right: 0.4cm;
+    box-sizing: border-box;
+}
+
+.form-container table {
+    .form-container table {
+        margin: 0 0 0 auto; 
+}
+
+.section-title {
+    background: #d0e7ff;  
+    color: black;          
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px 0;
+    border: 1px solid #2b6cb0;
+}
+
+.table-label {
+    font-weight: bold;
+    background: #f0f0f0;  
+    text-align: center;
+    white-space: nowrap;
+    height: 0.5cm;
+    font-size: 17px;
+    padding-left: 10px;
+    border: 1px solid #ccc;
+}
+
+.table-input {
+    width: 4cm;
+    font-weight: bold;
+    text-align: center;
+    height: 0.4cm;
+    font-size: 15px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+#jsonOutput, #xmlOutput, pre {
+    background: #fafafa;
+    border: 1px solid #ccc;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    direction: ltr;
+    overflow-x: auto;
+}
+  </style>
+</head>
+<body>
+
+<form method="POST" action="/form_106">
+<input type="hidden" name="employee_id" value="{{ selected_employee_id }}">
+<input type="hidden" name="month" value="{{ selected_month }}">
+<input type="hidden" name="year" value="{{ selected_year }}">
+
+    <!-- Add an empty row with small height -->
+<div style="height: 0.3cm;"></div>
+
+    <!-- Go to Main Page Button -->
+    <a href="{{ url_for('index') }}" style="text-decoration: none;">
+        <button type="button" style="font-weight: bold; width: 4.2cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+            עבור לדף הראשי
+        </button>
+
+
+<h1>טופס 106 - דו"ח שנתי לעובד</h1>
+
+<div class="form-container">
+
+<!-- טבלה 1: פרטי מעסיק  -->
+<table border="1" cellspacing="0" cellpadding="10" 
+       style="width:auto; border-collapse:collapse; direction:rtl; font-family:Arial, sans-serif;">
+    <tr>
+        <td class="section-title" colspan="8">פרטי מעסיק</td>
+    </tr>
+    <tr>
+        <td class="table-label">שם חברה</td>
+        <td><input type="text" name="companyName" class="table-input"
+                   value="{{ form_data.get('companyName','') }}"></td>
+        <td class="table-label">מספר תיק ניכויים</td>
+        <td><input type="text" name="taxFileNumber" class="table-input"
+                   value="{{ form_data.get('taxFileNumber','') }}"></td>
+        <td class="table-label">כתובת</td>
+        <td><input type="text" name="companyAddress" class="table-input"
+        style="width: 302px;"
+                   value="{{ form_data.get('companyAddress','') }}"></td>
+        <td class="table-label">שנת מס</td>
+        <td><input type="text" name="reportYear" class="table-input"
+                   value="{{ form_data.get('reportYear','') }}"></td>
+    </tr>
+</table>
+
+<!-- טבלה 2: פרטי עובד  -->
+<table border="1" cellspacing="0" cellpadding="10" 
+       style="width:auto; border-collapse:collapse; direction:rtl; font-family:Arial, sans-serif;">
+    <tr>
+        <td class="section-title" colspan="8">פרטי עובד</td>
+    </tr>
+    <tr>
+        <td class="table-label">שם מלא</td>
+        <td><input type="text" name="fullName" class="table-input"
+                   value="{{ form_data.get('employee_name','') }}"></td>
+        <td class="table-label">מספר זהות</td>
+        <td><input type="text" name="idNumber" class="table-input"
+                   value="{{ form_data.get('id_number','') }}"></td>
+        <td class="table-label">כתובת</td>
+        <td><input type="text" name="employeeAddress" class="table-input"
+        style="width: 320px;"
+          value="{{ [form_data.get('address',''), form_data.get('city',''), form_data.get('postal_code','')] | reject('equalto', '') | join(', ') }}"></td>
+        <td class="table-label">חודשי עבודה</td>
+        <td><input type="text" name="monthsWorked" class="table-input"
+                   value="{{ form_data.get('monthsWorked','') }}"></td>
+    </tr>
+</table>
+
+<!-- טבלה 3: הכנסות  -->
+<table border="1" cellspacing="0" cellpadding="10" 
+       style="width:auto; border-collapse:collapse; direction:rtl; font-family:Arial, sans-serif;">
+    <tr>
+        <td class="section-title" colspan="12">הכנסות</td>
+    </tr>
+    <tr>
+        <td class="table-label">שכר ברוטו</td>
+        <td><input type="text" name="grossSalary" class="table-input"
+                   value="{{ form_data.get('gross_taxable_yearly','0.0') }}"></td>
+        <td class="table-label">מענקים</td>
+        <td><input type="text" name="bonuses" class="table-input"
+                   value="{{ form_data.get('bonuses','0.0') }}"></td>
+        <td class="table-label">הטבות (רכב, טלפון וכו')</td>
+        <td><input type="text" name="benefits" class="table-input"
+                   value="{{ form_data.get('benefits','0.0') }}"></td>
+        <td class="table-label">פיצויי פיטורין</td>
+        <td><input type="text" name="severance" class="table-input"
+                   value="{{ form_data.get('severance','0.0') }}"></td>
+        <td class="table-label">הפקדות לפנסיה</td>
+        <td><input type="text" name="pensionDeposits" class="table-input"
+                   value="{{ form_data.get('pensionDeposits','0.0') }}"></td>
+        <td class="table-label">קרן השתלמות</td>
+        <td><input type="text" name="providentFund" class="table-input"
+                   value="{{ form_data.get('study_fund_deductions_yearly','0.0') }}"></td>
+    </tr>
+</table>
+
+<!-- טבלה 4: ניכויים  -->
+<table border="1" cellspacing="0" cellpadding="10" 
+       style="width:auto; border-collapse:collapse; direction:rtl; font-family:Arial, sans-serif;">
+    <tr>
+        <td class="section-title" colspan="10">ניכויים</td>
+    </tr>
+    <tr>
+        <td class="table-label">מס הכנסה</td>
+        <td><input type="text" name="incomeTax" class="table-input"
+                   value="{{ form_data.get('income_tax_yearly','0.0') }}"></td>
+        <td class="table-label">ביטוח לאומי</td>
+        <td><input type="text" name="nationalInsurance" class="table-input"
+                   value="{{ form_data.get('national_insurance_deductions_yearly','0.0') }}"></td>
+        <td class="table-label">ביטוח בריאות</td>
+        <td><input type="text" name="healthInsurance" class="table-input"
+                   value="{{ form_data.get('health_insurance_deductions_yearly','0.0') }}"></td>
+        <td class="table-label">ניכוי לפנסיה</td>
+        <td><input type="text" name="pensionDeduction" class="table-input"
+                   value="{{ form_data.get('pensionDeduction','0.0') }}"></td>
+        <td class="table-label">ניכוי לקרן השתלמות</td>
+        <td><input type="text" name="providentDeduction" class="table-input"
+                   value="{{ form_data.get('study_fund_deductions_yearly','0.0') }}"></td>
+    </tr>
+</table>
+
+<!-- טבלה 5: סיכום  -->
+<table border="1" cellspacing="0" cellpadding="10" 
+       style="width:auto; border-collapse:collapse; direction:rtl; font-family:Arial, sans-serif;">
+    <tr>
+        <td class="section-title" colspan="8">סיכום</td>
+    </tr>
+    <tr>
+        <td class="table-label">סך הכנסות</td>
+        <td><input type="text" name="totalIncome" class="table-input"
+        style="width: 179px;"
+                   value="{{ form_data.get('totalIncome','0.0') }}"></td>
+        <td class="table-label">הכנסה חייבת במס</td>
+        <td><input type="text" name="taxableIncome" class="table-input"
+        style="width: 179px;"
+                   value="{{ form_data.get('gross_taxable_yearly','0.0') }}"></td>
+        <td class="table-label">סך ניכויים</td>
+        <td><input type="text" name="totalDeductions" class="table-input"
+        style="width: 179px;"
+                   value="{{ form_data.get('totalDeductions','0.0') }}"></td>
+        <td class="table-label">שכר נטו</td>
+        <td><input type="text" name="netSalary" class="table-input"
+        style="width: 179px;"
+                   value="{{ form_data.get('netSalary','0.0') }}"></td>
+    </tr>
+</table>
+
+</form>
+
+<!-- Add an empty row with small height -->
+<div style="height: 0.6cm;"></div>
+
+<!-- Save Data Button Row -->
+<div style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; gap: 8px;">
+
+    <!-- Save Form Button -->
+    <button type="button" class="btn-save" onclick="saveForm()" 
+            style="font-weight: bold; width: 3.2cm; height: 0.5cm; font-size: 17px; 
+                   background-color: #007bff; color: white; display: flex; 
+                   align-items: center; justify-content: center;">
+        שמור טופס
+    </button>
+
+    <!-- Download JSON Button -->
+    <button type="button" onclick="downloadJSON()" 
+            style="font-weight: bold; width: 3.2cm; height: 0.5cm; 
+                   font-size: 17px; background-color: #007bff; color: white; 
+                   display: flex; align-items: center; justify-content: center;">
+        הורד JSON
+    </button>
+
+    <!-- Download XML Button -->
+    <button type="button" onclick="downloadXML()" 
+            style="font-weight: bold; width: 3.2cm; height: 0.5cm; 
+                   font-size: 17px; background-color: #007bff; color: white; 
+                   display: flex; align-items: center; justify-content: center;">
+        הורד XML
+    </button>
+
+    <!-- Auto Generate Button -->
+    <button type="button" onclick="saveForm()" 
+            style="font-weight: bold; width: 3.2cm; height: 0.5cm; 
+                   font-size: 17px; background-color: #007bff; color: white; 
+                   display: flex; align-items: center; justify-content: center;">
+        צור אוטומטית
+    </button>
+</div>
+
+
+    <!-- Add an empty row with small height -->
+<div style="height: 9.9cm;"></div>
+
+<h2>📌 JSON שנוצר:</h2>
+<pre id="jsonOutput106"></pre>
+
+<h2>📌 XML שנוצר:</h2>
+<pre id="xmlOutput106"></pre>
+
+<script>
+function saveForm106() {
+  const inputs = document.querySelectorAll("input");
+  const data = {};
+
+  inputs.forEach(input => {
+    data[input.name] = input.value;
+  });
+
+  // JSON structure for Form 106
+  const jsonData = {
+    employer: {
+      companyName: data.companyName,
+      taxFileNumber: data.taxFileNumber,
+      companyAddress: data.companyAddress,
+      reportYear: data.year
+    },
+    employee: {
+      fullName: data.fullName,
+      idNumber: data.idNumber,
+      employeeAddress: data.employeeAddress,
+      monthsWorked: data.monthsWorked
+    },
+    income: {
+      grossSalary: data.grossSalary,
+      bonuses: data.bonuses,
+      benefits: data.benefits,
+      severance: data.severance,
+      pensionDeposits: data.pensionDeposits,
+      providentFund: data.providentFund
+    },
+    deductions: {
+      incomeTax: data.incomeTax,
+      nationalInsurance: data.nationalInsurance,
+      healthInsurance: data.healthInsurance,
+      pensionDeduction: data.pensionDeduction,
+      providentDeduction: data.providentDeduction
+    },
+    summary: {
+      totalIncome: data.totalIncome,
+      taxableIncome: data.taxableIncome,
+      totalDeductions: data.totalDeductions,
+      netSalary: data.netSalary
+    }
+  };
+
+  // הצגת ה-JSON
+  const jsonOutput = document.getElementById("jsonOutput106");
+  if (jsonOutput) jsonOutput.textContent = JSON.stringify(jsonData, null, 2);
+
+  // Convert JSON to XML
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Form106Report>\n';
+
+  xml += '  <Employer>\n';
+  xml += `    <CompanyName>${jsonData.employer.companyName}</CompanyName>\n`;
+  xml += `    <TaxFileNumber>${jsonData.employer.taxFileNumber}</TaxFileNumber>\n`;
+  xml += `    <Address>${jsonData.employer.companyAddress}</Address>\n`;
+  xml += `    <ReportYear>${jsonData.employer.reportYear}</ReportYear>\n`;
+  xml += '  </Employer>\n';
+
+  xml += '  <EmployeeReport>\n';
+  xml += '    <Employee>\n';
+  xml += `      <FullName>${jsonData.employee.fullName}</FullName>\n`;
+  xml += `      <IDNumber>${jsonData.employee.idNumber}</IDNumber>\n`;
+  xml += `      <Address>${jsonData.employee.employeeAddress}</Address>\n`;
+  xml += `      <MonthsWorked>${jsonData.employee.monthsWorked}</MonthsWorked>\n`;
+  xml += '    </Employee>\n';
+
+  xml += '    <Income>\n';
+  xml += `      <GrossSalary>${jsonData.income.grossSalary}</GrossSalary>\n`;
+  xml += `      <Bonuses>${jsonData.income.bonuses}</Bonuses>\n`;
+  xml += `      <Benefits>${jsonData.income.benefits}</Benefits>\n`;
+  xml += `      <Severance>${jsonData.income.severance}</Severance>\n`;
+  xml += `      <PensionDeposits>${jsonData.income.pensionDeposits}</PensionDeposits>\n`;
+  xml += `      <ProvidentFund>${jsonData.income.providentFund}</ProvidentFund>\n`;
+  xml += '    </Income>\n';
+
+  xml += '    <Deductions>\n';
+  xml += `      <IncomeTax>${jsonData.deductions.incomeTax}</IncomeTax>\n`;
+  xml += `      <NationalInsurance>${jsonData.deductions.nationalInsurance}</NationalInsurance>\n`;
+  xml += `      <HealthInsurance>${jsonData.deductions.healthInsurance}</HealthInsurance>\n`;
+  xml += `      <PensionDeduction>${jsonData.deductions.pensionDeduction}</PensionDeduction>\n`;
+  xml += `      <ProvidentDeduction>${jsonData.deductions.providentDeduction}</ProvidentDeduction>\n`;
+  xml += '    </Deductions>\n';
+
+  xml += '    <Summary>\n';
+  xml += `      <TotalIncome>${jsonData.summary.totalIncome}</TotalIncome>\n`;
+  xml += `      <TaxableIncome>${jsonData.summary.taxableIncome}</TaxableIncome>\n`;
+  xml += `      <TotalDeductions>${jsonData.summary.totalDeductions}</TotalDeductions>\n`;
+  xml += `      <NetSalary>${jsonData.summary.netSalary}</NetSalary>\n`;
+  xml += '    </Summary>\n';
+
+  xml += '</Form106Report>';
+
+  // הצגת ה-XML
+  const xmlOutput = document.getElementById("xmlOutput106");
+  if (xmlOutput) xmlOutput.textContent = xml;
+}
+
+// פונקציות הורדה נקיות
+function downloadFile(content, fileName, contentType) {
+    const a = document.createElement("a");
+    const file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
+
+function downloadJSON106() {
+    const content = document.getElementById("jsonOutput106").textContent;
+    if (content) downloadFile(content, "form106.json", "application/json");
+}
+
+function downloadXML106() {
+    const content = document.getElementById("xmlOutput106").textContent;
+    if (content) downloadFile(content, "form106.xml", "application/xml");
+}
+</script>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+  </div>
+</body>
+</html>

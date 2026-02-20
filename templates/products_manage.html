@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <title>ניהול מוצרים</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            line-height: 1.5; /* שיפור קריאות כללית */
+        }
+        
+        /* סגנון כללי לכל תיבות הקלט והבחירה */
+        input[type="text"], 
+        input[type="number"], 
+        button {
+            height: 25px;         /* גובה אחיד ומוגדר */
+            padding: 0 10px;      /* ריווח פנימי */
+            box-sizing: border-box; /* לוודא שה-padding לא מגדיל את הגובה מעבר ל-35px */
+            vertical-align: middle; /* יישור אנכי למרכז */
+        }
+
+        table { width: 80%; border-collapse: collapse; margin-top: 20px; }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px 10px; /* ריווח פנימי בטבלה */
+            text-align: right; 
+            vertical-align: middle; /* יישור אנכי למרכז */
+        }
+        th { background-color: #f2f2f2; }
+        
+        /* סגנון לטופס כדי ליישר הכל בשורה אחת */
+        .form-row {
+            display: flex;
+            gap: 15px;          /* רווח בין האלמנטים בשורה */
+            align-items: flex-end; /* מיישר את הכפתור לתחתית תיבות הטקסט */
+            margin-bottom: 20px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column; /* מסדר את הלייבל מעל האינפוט */
+        }
+        
+        label { 
+            font-weight: bold; 
+            margin-bottom: 5px; /* רווח קטן מתחת ללייבל */
+        }
+        
+        button[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px;
+        }
+        .add-product-title {
+            margin-top: 20px;
+        }
+
+        /* כלל חדש לשמירה על יישור הכפתורים זה לצד זה עם רווח קטן */
+        .header-buttons {
+            display: flex;
+            gap: 30px; 
+            align-items: center;
+        }
+
+        /* Add this new rule: */
+        .form-actions-row {
+            display: flex;
+            gap: 35px; /* Space between the two forms */
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .form-actions-row button {
+             height: 0.65cm; /* Ensure buttons have consistent height */
+         margin-top: 2.5mm; /* Push buttons down by 3 millimeters */
+        }
+
+    </style>
+
+</head>
+<body>
+    
+    <!-- Button and Title Section -->
+    <div class="header-row">
+        <h1>ניהול מוצרים</h1>
+
+        <div class="header-buttons">
+
+            <!-- Go to Main Page Button -->
+            <a href="{{ url_for('index') }}" style="text-decoration: none;">
+                <button type="button" style="font-weight: bold; width: 4.2cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+                    עבור לדף הראשי
+                </button>
+            </a>
+
+            <!-- Go to Invoice Button (כפתור חזרה לחשבונית) -->
+            <a href="{{ url_for('view_invoice') }}" style="text-decoration: none;">
+                <button type="button" style="font-weight: bold; width: 4cm; height: 0.5cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+                    עבור לחשבונית 
+                </button>
+            </a>
+        </div>
+    </div>
+
+    <!-- Add Product Title -->
+    <h2 class="add-product-title">הוסף מוצר חדש</h2>
+
+    <!-- Wrap the main add product form and the delete button form in a single flex container -->
+    <div class="form-actions-row">
+
+        <!-- Form Section (Fixed to one row) -->
+        <form method="POST" action="{{ url_for('manage_products') }}">
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="name">שם המוצר:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="price">מחיר:</label>
+                    <input type="number" id="price" name="price" step="0.01" required style="width: 100px;">
+                </div>
+
+                <div class="form-field">
+                    <label for="description">תיאור:</label>
+                    <input type="text" id="description" name="description">
+                </div>
+     
+                <!-- Save Product Button -->           
+                <button type="submit" style="font-weight: bold; width: 2.6cm; height: 0.65cm; font-size: 17px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center;">
+                    שמור מוצר
+                </button>
+            </div>
+        </form>
+
+        <!-- Delete Form - Now aligned using the parent form-actions-row container -->
+        <form id="delete-form" method="POST" action="{{ url_for('delete_selected_products') }}" onsubmit="return confirm('האם אתה בטוח שברצונך למחוק את המוצרים שנבחרו?');">
+            <!-- No inner form-row needed here -->
+                <button type="submit" class="delete-button" style="font-weight: bold; width: 3.8cm; height: 0.65cm; font-size: 17px; background-color: #f44336; color: white; display: flex; align-items: center; justify-content: center;">
+                    🗑️ מחק נבחרים
+            </button>
+            </div>
+        </form>
+
+    <h2>רשימת מוצרים קיימים</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>בחר</th> <!-- ADDED CHECKBOX HEADER -->
+                <th>שם המוצר</th>
+                <th>מחיר</th>
+                <th>תיאור</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+                <tr>
+                    <td style="text-align: center;">
+                        <!-- ADDED CHECKBOX FOR DELETION LOGIC -->
+                        <input type="checkbox" name="delete_products" value="{{ product.id }}">
+                    </td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.price }}</td>
+                    <td>{{ product.description }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!--  DevTools F12 Browser Blocker Script  -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+
+</body>
+</html>
