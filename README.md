@@ -107,3 +107,4 @@ HoursCard/
 
 This app was set up using your launcher script.
 # app-salary
+# app-salary
